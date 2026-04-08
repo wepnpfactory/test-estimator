@@ -128,7 +128,11 @@ function buildEmbedScript(apiOrigin: string): string {
       '.te-dim-resolved{margin-top:6px;font-size:11px;color:#666}',
       '.te-dim-error{color:#dc2626}',
       '.te-dim-input-error{border-color:#dc2626;background:#fef2f2}',
-      '.te-dim-hint{margin-top:4px;font-size:10px;color:#999}'
+      '.te-dim-hint{margin-top:4px;font-size:10px;color:#999}',
+      '.te-dim-derived{margin:8px 0 0;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11px}',
+      '.te-dim-derived div{display:flex;gap:4px}',
+      '.te-dim-derived dt{color:#888;margin:0}',
+      '.te-dim-derived dd{margin:0;color:#111;font-weight:500;font-variant-numeric:tabular-nums}'
     ].join('');
     root.appendChild(style);
 
@@ -263,6 +267,48 @@ function buildEmbedScript(apiOrigin: string): string {
             ? '<div class="te-dim-hint">최대 ' + maxW + ' × ' + maxH + ' mm</div>'
             : '';
 
+          // 책자 케이스 — 편집/표지/책등 사이즈 자동 계산해서 표시
+          var derived = '';
+          if (wNum > 0 && hNum > 0 && !overW && !overH) {
+            var bleed = state.schema.bleedMm || 0;
+            var editW = wNum + bleed * 2;
+            var editH = hNum + bleed * 2;
+
+            // 내지·표지 종이 두께 / 페이지 수 찾아서 책등 계산
+            var innerThick = 0, coverThick = 0, pages = 0;
+            (state.schema.optionGroups || []).forEach(function(og){
+              if (og.kind === 'SHEET_COUNT') {
+                if (og.allowDirectInput) pages = state.directValues[og.id] || 0;
+                else {
+                  var sid = state.selections[og.id];
+                  var si = sid && og.items.find(function(x){return x.id===sid});
+                  if (si) pages = si.multiplier || 0;
+                }
+              }
+              if (og.isInnerPaper || og.isCoverPaper) {
+                var psid = state.selections[og.id];
+                var pi = psid && og.items.find(function(x){return x.id===psid});
+                if (pi && pi.thicknessMm) {
+                  if (og.isInnerPaper) innerThick = pi.thicknessMm;
+                  if (og.isCoverPaper) coverThick = pi.thicknessMm;
+                }
+              }
+            });
+            var spine = (pages > 0 && innerThick > 0)
+              ? (pages / 2) * innerThick + 2 * coverThick
+              : 0;
+            var coverW = pages > 0 ? (wNum * 2 + spine + bleed * 2) : 0;
+            var coverH = editH;
+
+            derived = '<dl class="te-dim-derived">';
+            derived += '<div><dt>편집사이즈</dt><dd>' + editW + ' × ' + editH + ' mm</dd></div>';
+            if (coverW > 0) {
+              derived += '<div><dt>표지사이즈</dt><dd>' + Math.round(coverW) + ' × ' + coverH + ' mm</dd></div>';
+              derived += '<div><dt>책등</dt><dd>' + spine.toFixed(1) + ' mm</dd></div>';
+            }
+            derived += '</dl>';
+          }
+
           html += '<div class="te-row">'
             + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
             + '<div class="te-dim-row">'
@@ -273,6 +319,7 @@ function buildEmbedScript(apiOrigin: string): string {
             + '</div>'
             + hint
             + resolvedLabel
+            + derived
             + '</div>';
           return;
         }
