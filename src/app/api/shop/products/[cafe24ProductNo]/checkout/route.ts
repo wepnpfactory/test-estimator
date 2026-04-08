@@ -103,8 +103,10 @@ export async function POST(
         status: "IN_CART",
       },
     });
+    const storefrontOrigin =
+      product.mall.storefrontOrigin || `https://${product.mall.mallId}.cafe24.com`;
     const cartUrl = buildAddToCartUrl({
-      mallId: product.mall.mallId,
+      storefrontOrigin,
       productNo: created.productNo,
     });
 
