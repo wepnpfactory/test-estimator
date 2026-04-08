@@ -142,8 +142,25 @@ export async function cafe24Fetch<T = unknown>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Cafe24 API ${res.status} ${path}: ${text}`);
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text);
+    } catch {}
+    throw new Cafe24ApiError(res.status, path, text, body);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+export class Cafe24ApiError extends Error {
+  status: number;
+  path: string;
+  body: unknown;
+  constructor(status: number, path: string, raw: string, body: unknown) {
+    super(`Cafe24 API ${status} ${path}: ${raw}`);
+    this.name = "Cafe24ApiError";
+    this.status = status;
+    this.path = path;
+    this.body = body;
+  }
 }

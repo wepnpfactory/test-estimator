@@ -7,8 +7,34 @@
 // 우리 프로젝트는 PRODUCT_DETAIL 에 embed.js 를 설치한다.
 // 동일 src 가 이미 있으면 중복 등록하지 않는다 (idempotent).
 
-import { cafe24Fetch } from "@/lib/cafe24/client";
+import { Cafe24ApiError, cafe24Fetch } from "@/lib/cafe24/client";
 import type { Cafe24Mall } from "@/generated/prisma/client";
+
+interface AlreadyExistsBody {
+  error?: {
+    code?: number;
+    message?: string;
+    more_info?: {
+      script_no?: number | string;
+      src?: string;
+      display_location?: string[];
+    };
+  };
+}
+
+function parseAlreadyExists(body: unknown): {
+  scriptNo: number;
+  src?: string;
+} | null {
+  if (!body || typeof body !== "object") return null;
+  const e = (body as AlreadyExistsBody).error;
+  if (!e || e.code !== 422) return null;
+  if (!e.message?.includes("already has the script")) return null;
+  const raw = e.more_info?.script_no;
+  const scriptNo = typeof raw === "string" ? Number(raw) : raw;
+  if (!scriptNo || !Number.isFinite(scriptNo)) return null;
+  return { scriptNo, src: e.more_info?.src };
+}
 
 export type ScriptTagLocation =
   | "BEFORE_BODY_TAG"
@@ -155,25 +181,62 @@ export async function installScriptTag(
     }
   }
 
-  const res = await cafe24Fetch<{ scripttag: RawScriptTag }>(
-    mall,
-    "/api/v2/admin/scripttags",
-    {
-      method: "POST",
-      body: {
-        shop_no: shopNo ?? mall.defaultShopNo ?? 1,
-        request: {
-          src,
-          display_location: locations,
+  async function postCreate() {
+    return cafe24Fetch<{ scripttag: RawScriptTag }>(
+      mall,
+      "/api/v2/admin/scripttags",
+      {
+        method: "POST",
+        body: {
+          shop_no: shopNo ?? mall.defaultShopNo ?? 1,
+          request: { src, display_location: locations },
         },
       },
-    },
-  );
+    );
+  }
 
-  return {
-    installed: true,
-    scriptNo: res.scripttag?.script_no,
-    removedCount,
-    alreadyExisted: false,
-  };
+  try {
+    const res = await postCreate();
+    return {
+      installed: true,
+      scriptNo: res.scripttag?.script_no,
+      removedCount,
+      alreadyExisted: false,
+    };
+  } catch (err) {
+    // Cafe24 list 가 stale 해서 exact-match 를 못 찾았어도, POST 시점에 422가 나오면
+    // 응답 본문의 script_no 를 그대로 사용해 처리한다.
+    if (err instanceof Cafe24ApiError && err.status === 422) {
+      const existing = parseAlreadyExists(err.body);
+      if (existing) {
+        if (force) {
+          // 강제 재설치 — 기존 것 삭제 후 재생성
+          try {
+            await deleteScriptTag(mall, existing.scriptNo, shopNo);
+            removedCount++;
+          } catch (delErr) {
+            console.warn(
+              "[script-tags] failed to delete existing during force:",
+              delErr instanceof Error ? delErr.message : delErr,
+            );
+          }
+          const res = await postCreate();
+          return {
+            installed: true,
+            scriptNo: res.scripttag?.script_no,
+            removedCount,
+            alreadyExisted: false,
+          };
+        }
+        // 이미 존재 → idempotent 성공
+        return {
+          installed: false,
+          scriptNo: existing.scriptNo,
+          removedCount,
+          alreadyExisted: true,
+        };
+      }
+    }
+    throw err;
+  }
 }
