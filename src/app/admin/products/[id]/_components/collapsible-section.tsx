@@ -35,9 +35,7 @@ export function CollapsibleSection({
     // 변경이 있을 때만 setState — 불필요한 cascade 방지
     setOpen((prev) => (prev === next ? prev : next));
     setHydrated(true);
-    // storageKey 가 안정적이라는 가정. 렌더 1회 보정용 effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storageKey, defaultOpen]);
 
   useEffect(() => {
     if (!hydrated) return;
