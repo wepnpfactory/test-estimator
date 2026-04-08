@@ -10,6 +10,10 @@
 // - selling: T 가 없으면 basket 진입 자체가 거부됨
 
 import { cafe24Fetch } from "@/lib/cafe24/client";
+import {
+  attachAdditionalOptions,
+  type AdditionalOptionField,
+} from "@/lib/cafe24/additional-options";
 import type { Cafe24Mall } from "@/generated/prisma/client";
 
 export interface CreateDynamicProductInput {
@@ -81,7 +85,7 @@ export async function createDynamicProduct(
   }
 
   const body = {
-    shop_no: input.shopNo ?? 1,
+    shop_no: input.shopNo ?? input.mall.defaultShopNo ?? 1,
     request,
   };
 
@@ -109,6 +113,55 @@ export async function deleteDynamicProduct(
 ): Promise<void> {
   await cafe24Fetch(mall, `/api/v2/admin/products/${productNo}`, {
     method: "DELETE",
+  });
+}
+
+/**
+ * 주문이 완료된 동적 상품을 비활성화한다.
+ * 삭제하면 주문서에서 상품 정보 조회가 불가능해지므로, 판매·진열만 끈다.
+ */
+export async function deactivateDynamicProduct(
+  mall: Cafe24Mall,
+  productNo: number,
+): Promise<void> {
+  await cafe24Fetch(mall, `/api/v2/admin/products/${productNo}`, {
+    method: "PUT",
+    body: {
+      shop_no: mall.defaultShopNo ?? 1,
+      request: {
+        display: "F",
+        selling: "F",
+      },
+    },
+  });
+}
+
+/**
+ * 동적 상품의 추가옵션 입력 필드를 등록한다.
+ * - wepnpSeqno: jarvis 디자인 편집번호 (있으면 등록)
+ * - fileUpload: S3 파일 a 링크 (있으면 등록)
+ * 둘 중 하나라도 사용한다면 호출.
+ */
+export async function attachDynamicProductAdditionalOptions(params: {
+  mall: Cafe24Mall;
+  productNo: number;
+  hasDesignNo: boolean;
+  hasFile: boolean;
+}): Promise<void> {
+  const fields: AdditionalOptionField[] = [];
+  if (params.hasDesignNo) {
+    fields.push({ name: "wepnpSeqno", required: false, textLength: 64 });
+  }
+  if (params.hasFile) {
+    // S3 a 링크 보관용 — 길어질 수 있어 충분히 잡음
+    fields.push({ name: "fileUpload", required: false, textLength: 1024 });
+  }
+  if (fields.length === 0) return;
+
+  await attachAdditionalOptions({
+    mall: params.mall,
+    productNo: params.productNo,
+    additionalOptions: fields,
   });
 }
 
