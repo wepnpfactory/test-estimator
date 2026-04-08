@@ -16,7 +16,11 @@ interface ItemSeed {
   widthMm?: number;
   heightMm?: number;
   thicknessMm?: number;
+  facetA?: string;
+  facetB?: string;
 }
+
+type DisplayType = "SELECT" | "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" | "CASCADE";
 
 interface GroupSeed {
   name: string;
@@ -28,6 +32,7 @@ interface GroupSeed {
     | "DIMENSIONS"
     | "INNER_PAPER"
     | "COVER_PAPER";
+  displayType?: DisplayType;
   required?: boolean;
   perSheet?: boolean;
   perQuantity?: boolean;
@@ -35,8 +40,67 @@ interface GroupSeed {
   allowDirectInput?: boolean;
   minDirectInput?: number;
   maxDirectInput?: number;
+  facetALabel?: string;
+  facetBLabel?: string;
   items?: ItemSeed[];
 }
+
+// 종이 × 평량 카테시안 시드 생성 — 각 item 에 facetA/facetB 셋업
+function paperFacetItems(
+  papers: { label: string; value: string }[],
+  gsms: { label: string; value: string; thicknessMm?: number }[],
+): ItemSeed[] {
+  const out: ItemSeed[] = [];
+  for (const p of papers) {
+    for (const g of gsms) {
+      out.push({
+        label: `${p.label} · ${g.label}`,
+        value: `${p.value}__${g.value}`,
+        facetA: p.label,
+        facetB: g.label,
+        thicknessMm: g.thicknessMm,
+      });
+    }
+  }
+  return out;
+}
+
+const BOOKLET_COVER_PAPERS = [
+  { label: "아트", value: "art" },
+  { label: "스노우", value: "snow" },
+  { label: "랑데뷰 화이트", value: "rendezvous_white" },
+  { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
+  { label: "아르떼 화이트", value: "arte_white" },
+  { label: "아르떼 내추럴", value: "arte_natural" },
+  { label: "앙상블 E클래스 고백색", value: "ensemble_eclass_off" },
+  { label: "앙상블 E클래스 백색", value: "ensemble_eclass_white" },
+];
+const BOOKLET_COVER_GSMS = [
+  { label: "180g", value: "g180" },
+  { label: "200g", value: "g200" },
+  { label: "250g", value: "g250" },
+  { label: "300g", value: "g300" },
+];
+
+const BOOKLET_INNER_PAPERS = [
+  { label: "모조 미색", value: "mojo_off" },
+  { label: "모조 백색", value: "mojo_white" },
+  { label: "아트", value: "art" },
+  { label: "스노우", value: "snow" },
+  { label: "에스플러스 미색", value: "splus_off" },
+  { label: "에스플러스 백색", value: "splus_white" },
+  { label: "뉴플러스 백색", value: "newplus_white" },
+  { label: "뉴플러스 미색", value: "newplus_off" },
+  { label: "랑데뷰 화이트", value: "rendezvous_white" },
+  { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
+  { label: "아르떼 화이트", value: "arte_white" },
+  { label: "아르떼 내추럴", value: "arte_natural" },
+];
+const BOOKLET_INNER_GSMS = [
+  { label: "80g", value: "g80" },
+  { label: "100g", value: "g100" },
+  { label: "120g", value: "g120" },
+];
 
 // ───────────────────────────────────────────────
 // 책자 — 003·004 양장 풀스펙 기준
@@ -162,34 +226,16 @@ const BOOKLET_GROUPS: GroupSeed[] = [
     ],
   },
   {
-    name: "표지 종이",
+    name: "표지 용지",
     value: "cover_paper",
     kind: "COVER_PAPER",
+    displayType: "CASCADE",
     required: true,
     perQuantity: true,
     perArea: true,
-    items: [
-      { label: "아트", value: "art" },
-      { label: "스노우", value: "snow" },
-      { label: "랑데뷰 화이트", value: "rendezvous_white" },
-      { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
-      { label: "아르떼 화이트", value: "arte_white" },
-      { label: "아르떼 내추럴", value: "arte_natural" },
-      { label: "앙상블 E클래스 고백색", value: "ensemble_eclass_off" },
-      { label: "앙상블 E클래스 백색", value: "ensemble_eclass_white" },
-    ],
-  },
-  {
-    name: "표지 평량",
-    value: "cover_gsm",
-    kind: "NORMAL",
-    required: true,
-    items: [
-      { label: "180g", value: "g180" },
-      { label: "200g", value: "g200" },
-      { label: "250g", value: "g250" },
-      { label: "300g", value: "g300" },
-    ],
+    facetALabel: "종이",
+    facetBLabel: "평량",
+    items: paperFacetItems(BOOKLET_COVER_PAPERS, BOOKLET_COVER_GSMS),
   },
   {
     name: "표지 인쇄면",
@@ -242,38 +288,17 @@ const BOOKLET_GROUPS: GroupSeed[] = [
     ],
   },
   {
-    name: "내지 종이",
+    name: "내지 용지",
     value: "inner_paper",
     kind: "INNER_PAPER",
+    displayType: "CASCADE",
     required: true,
     perSheet: true,
     perQuantity: true,
     perArea: true,
-    items: [
-      { label: "모조 미색", value: "mojo_off" },
-      { label: "모조 백색", value: "mojo_white" },
-      { label: "아트", value: "art" },
-      { label: "스노우", value: "snow" },
-      { label: "에스플러스 미색", value: "splus_off" },
-      { label: "에스플러스 백색", value: "splus_white" },
-      { label: "뉴플러스 백색", value: "newplus_white" },
-      { label: "뉴플러스 미색", value: "newplus_off" },
-      { label: "랑데뷰 화이트", value: "rendezvous_white" },
-      { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
-      { label: "아르떼 화이트", value: "arte_white" },
-      { label: "아르떼 내추럴", value: "arte_natural" },
-    ],
-  },
-  {
-    name: "내지 평량",
-    value: "inner_gsm",
-    kind: "NORMAL",
-    required: true,
-    items: [
-      { label: "80g", value: "g80" },
-      { label: "100g", value: "g100" },
-      { label: "120g", value: "g120" },
-    ],
+    facetALabel: "종이",
+    facetBLabel: "평량",
+    items: paperFacetItems(BOOKLET_INNER_PAPERS, BOOKLET_INNER_GSMS),
   },
   {
     name: "내지 색도",
@@ -538,6 +563,7 @@ export async function scaffoldProductGroups(
         name: g.name,
         value: g.value,
         kind: g.kind,
+        displayType: g.displayType ?? "SELECT",
         required: g.required ?? true,
         sortOrder: idx,
         perSheet: g.perSheet ?? false,
@@ -546,6 +572,8 @@ export async function scaffoldProductGroups(
         allowDirectInput: g.allowDirectInput ?? false,
         minDirectInput: g.minDirectInput ?? null,
         maxDirectInput: g.maxDirectInput ?? null,
+        facetALabel: g.facetALabel ?? null,
+        facetBLabel: g.facetBLabel ?? null,
         items: g.items
           ? {
               create: g.items.map((it, i) => ({
@@ -558,6 +586,8 @@ export async function scaffoldProductGroups(
                 widthMm: it.widthMm ?? null,
                 heightMm: it.heightMm ?? null,
                 thicknessMm: it.thicknessMm ?? null,
+                facetA: it.facetA ?? null,
+                facetB: it.facetB ?? null,
                 sortOrder: i,
               })),
             }
