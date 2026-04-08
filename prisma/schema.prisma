@@ -129,11 +129,6 @@ model OptionGroup {
   maxDirectInput   Int?
   // 같은 그룹에서 여러 아이템 동시 선택 허용 (예: 후가공 코팅+에폭시+박)
   multiSelect      Boolean           @default(false)
-  // 책자류 구분: 이 그룹이 내지/표지 종이를 의미하면 표시
-  // (책등 두께 / 표지 사이즈 자동 계산에 사용)
-  // deprecated — kind 가 INNER_PAPER / COVER_PAPER 면 자동 true 로 간주 (마이그레이션 백필 완료 후 제거 예정)
-  isInnerPaper     Boolean           @default(false)
-  isCoverPaper     Boolean           @default(false)
 
   items OptionItem[]
 
