@@ -52,6 +52,14 @@ export interface QuoteResult {
   quantity: number;
   areaMm2: number;
   areaRatio: number;
+  /** 표지 계산용 — 자동 산출된 책등 두께(mm) */
+  spineMm: number;
+  /** 표지 전개 면적(mm²) — (2×trimW + spine + 2×bleed) × (trimH + 2×bleed) */
+  coverAreaMm2: number;
+  /** 표지 면적 / Product.baseAreaMm2 */
+  coverAreaRatio: number;
+  /** 총 영업일 (Product.leadTimeDays + 선택 옵션 max leadTime) */
+  leadTimeDays: number;
   resolvedItems: {
     groupName: string;
     label: string;
@@ -104,6 +112,20 @@ export function isGroupVisible(
   selections: SelectedOption[],
 ): boolean {
   return isVisible(group.showWhen, selections);
+}
+
+/** 아이템 disabledWhen 평가 — 조건 만족 시 disabled(선택 불가) */
+export function isItemDisabled(
+  item: OptionItem,
+  selections: SelectedOption[],
+): boolean {
+  const conditions = parseShowWhen(item.disabledWhen);
+  if (conditions.length === 0) return false;
+  return conditions.every((c) =>
+    selections.some(
+      (sel) => sel.groupId === c.groupId && sel.itemId === c.itemId,
+    ),
+  );
 }
 
 /** SHEET_COUNT/QUANTITY 직접 입력 값에 매칭되는 첫 옵션 */
@@ -174,13 +196,17 @@ export function calculateQuote(
 
   // 2. 각 selection → resolved item 결정
   //    - 그룹에 따라 itemId 직접 / 직접입력값으로 range 매칭 / W·H 로 fit 매칭
+  //    - multiSelect 그룹은 같은 그룹에 복수 selection 허용
   const seenGroups = new Set<string>();
+  const dimInputByGroup = new Map<string, { w: number; h: number }>();
   const resolved: {
     group: OptionGroup;
     item: OptionItem;
     sheetsValue?: number;
     qtyValue?: number;
     areaMm2?: number;
+    dimW?: number;
+    dimH?: number;
   }[] = [];
 
   for (const sel of activeSelections) {
@@ -189,7 +215,7 @@ export function calculateQuote(
       errors.push(`unknown groupId: ${sel.groupId}`);
       continue;
     }
-    if (seenGroups.has(group.id)) {
+    if (seenGroups.has(group.id) && !group.multiSelect) {
       errors.push(`duplicate selection for group: ${group.name}`);
       continue;
     }
@@ -199,30 +225,48 @@ export function calculateQuote(
     if (group.kind === "DIMENSIONS") {
       const w = sel.widthMm ?? 0;
       const h = sel.heightMm ?? 0;
+      // 그룹의 maxWidthMm / maxHeightMm 상한 검증
+      if (group.maxWidthMm != null && w > group.maxWidthMm) {
+        errors.push(
+          `${group.name}: 최대 가로 ${group.maxWidthMm}mm 까지 입력할 수 있습니다`,
+        );
+        continue;
+      }
+      if (group.maxHeightMm != null && h > group.maxHeightMm) {
+        errors.push(
+          `${group.name}: 최대 세로 ${group.maxHeightMm}mm 까지 입력할 수 있습니다`,
+        );
+        continue;
+      }
       if (w > 0 && h > 0) {
         const item = findFitDimensionItem(group.items, w, h);
         if (!item) {
           errors.push(`no fit dimension item in ${group.name}`);
           continue;
         }
-        // 가시성 (item showWhen)
-        if (!isVisible(item.showWhen, activeSelections)) {
-          errors.push(`item hidden by showWhen: ${item.label}`);
+        if (isItemDisabled(item, activeSelections)) {
+          errors.push(`item disabled by current selection: ${item.label}`);
           continue;
         }
+        dimInputByGroup.set(group.id, { w, h });
         resolved.push({
           group,
           item,
           areaMm2: w * h,
+          dimW: w,
+          dimH: h,
         });
       } else if (sel.itemId) {
-        // 클라이언트가 itemId 만 보낸 경우 (구식 호환)
         const item = group.items.find((i) => i.id === sel.itemId);
         if (item) {
+          const iw = item.widthMm ?? 0;
+          const ih = item.heightMm ?? 0;
           resolved.push({
             group,
             item,
-            areaMm2: (item.widthMm ?? 0) * (item.heightMm ?? 0),
+            areaMm2: iw * ih,
+            dimW: iw,
+            dimH: ih,
           });
         }
       }
@@ -254,8 +298,8 @@ export function calculateQuote(
       // range 옵션 매칭 (없으면 가상 아이템)
       const item = findRangeItem(group.items, v);
       if (item) {
-        if (!isVisible(item.showWhen, activeSelections)) {
-          errors.push(`item hidden: ${item.label}`);
+        if (isItemDisabled(item, activeSelections)) {
+          errors.push(`item disabled: ${item.label}`);
           continue;
         }
         resolved.push({
@@ -281,11 +325,13 @@ export function calculateQuote(
             heightMm: null,
             minRange: null,
             maxRange: null,
-            showWhen: null,
+            disabledWhen: null,
             stock: null,
             imageUrl: null,
             sortOrder: 0,
             enabled: true,
+            thicknessMm: null,
+            leadTimeDays: 0,
           } as unknown as OptionItem,
           sheetsValue: group.kind === "SHEET_COUNT" ? v : undefined,
           qtyValue: group.kind === "QUANTITY" ? v : undefined,
@@ -308,8 +354,8 @@ export function calculateQuote(
       errors.push(`item disabled: ${item.label}`);
       continue;
     }
-    if (!isVisible(item.showWhen, activeSelections)) {
-      errors.push(`item hidden: ${item.label}`);
+    if (isItemDisabled(item, activeSelections)) {
+      errors.push(`item disabled by current selection: ${item.label}`);
       continue;
     }
     resolved.push({ group, item });
@@ -327,12 +373,14 @@ export function calculateQuote(
   let sheets = 1;
   let quantity = 1;
   let areaMm2 = 0;
+  let trimW = 0;
+  let trimH = 0;
   for (const r of resolved) {
     if (r.sheetsValue != null) sheets = r.sheetsValue;
     else if (r.group.kind === "SHEET_COUNT") sheets = r.item.multiplier || 1;
     if (r.qtyValue != null) quantity = r.qtyValue;
     else if (r.group.kind === "QUANTITY") quantity = r.item.multiplier || 1;
-    if (r.areaMm2 != null) areaMm2 = r.areaMm2;
+    if (r.areaMm2 != null && r.areaMm2 > 0) areaMm2 = r.areaMm2;
     else if (
       r.group.kind === "DIMENSIONS" &&
       r.item.widthMm &&
@@ -340,19 +388,63 @@ export function calculateQuote(
     ) {
       areaMm2 = r.item.widthMm * r.item.heightMm;
     }
+    if (r.dimW && r.dimH) {
+      trimW = r.dimW;
+      trimH = r.dimH;
+    } else if (
+      r.group.kind === "DIMENSIONS" &&
+      r.item.widthMm &&
+      r.item.heightMm
+    ) {
+      trimW = r.item.widthMm;
+      trimH = r.item.heightMm;
+    }
   }
   const baseArea = product.baseAreaMm2 || 1;
   const areaRatio = areaMm2 > 0 ? areaMm2 / baseArea : 1;
 
-  // 5. 합계 계산
+  // 4-b. 책등 두께 & 표지 면적 자동 계산
+  //     spine = 물리 sheet 수(sheets/2) × 내지 장당 두께(mm)
+  //     coverW = trimW × 2 + spine + bleed × 2
+  //     coverH = trimH + bleed × 2
+  let innerThicknessMm = 0;
+  for (const r of resolved) {
+    if (
+      (r.group.kind === "INNER_PAPER" || r.group.isInnerPaper) &&
+      r.item.thicknessMm
+    ) {
+      innerThicknessMm = r.item.thicknessMm;
+    }
+  }
+  const physicalSheets = Math.max(1, Math.ceil(sheets / 2));
+  const spineMm = innerThicknessMm > 0 ? physicalSheets * innerThicknessMm : 0;
+  const bleed = product.bleedMm || 0;
+  let coverAreaMm2 = 0;
+  if (trimW > 0 && trimH > 0) {
+    const coverW = trimW * 2 + spineMm + bleed * 2;
+    const coverH = trimH + bleed * 2;
+    coverAreaMm2 = coverW * coverH;
+  }
+  const coverAreaRatio = coverAreaMm2 > 0 ? coverAreaMm2 / baseArea : areaRatio;
+
+  // 5. 합계 계산 + lead time 집계
+  //    perArea 는 COVER_PAPER / isCoverPaper 그룹에선 coverAreaRatio 를 사용
   let optionsAddPrice = 0;
+  let maxOptionLeadTime = 0;
   const resolvedItems: QuoteResult["resolvedItems"] = [];
   for (const r of resolved) {
     let c = r.item.addPrice;
     if (r.group.perSheet) c *= sheets;
     if (r.group.perQuantity) c *= quantity;
-    if (r.group.perArea) c *= areaRatio;
+    if (r.group.perArea) {
+      const isCover =
+        r.group.kind === "COVER_PAPER" || r.group.isCoverPaper;
+      c *= isCover ? coverAreaRatio : areaRatio;
+    }
     optionsAddPrice += c;
+    if (r.item.leadTimeDays && r.item.leadTimeDays > maxOptionLeadTime) {
+      maxOptionLeadTime = r.item.leadTimeDays;
+    }
     resolvedItems.push({
       groupName: r.group.name,
       label: r.item.label,
@@ -360,6 +452,8 @@ export function calculateQuote(
       contribution: Math.round(c),
     });
   }
+
+  const leadTimeDays = (product.leadTimeDays || 0) + maxOptionLeadTime;
 
   return {
     basePrice: product.basePrice,
@@ -369,6 +463,10 @@ export function calculateQuote(
     quantity,
     areaMm2,
     areaRatio,
+    spineMm,
+    coverAreaMm2,
+    coverAreaRatio,
+    leadTimeDays,
     resolvedItems,
     visibleGroupIds: [...visibleGroupIds],
     errors,
