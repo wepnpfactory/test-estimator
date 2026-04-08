@@ -31,6 +31,9 @@ export function NewProductForm({ malls, action }: Props) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [basePrice, setBasePrice] = useState(0);
+  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">(
+    "FLAT_PRINT",
+  );
   const [submitting, setSubmitting] = useState(false);
 
   function handlePick(p: {
@@ -67,6 +70,7 @@ export function NewProductForm({ malls, action }: Props) {
       <input type="hidden" name="mallId" value={mallId} />
       <input type="hidden" name="cafe24ProductNo" value={picked?.productNo ?? ""} />
       <input type="hidden" name="basePrice" value={basePrice} />
+      <input type="hidden" name="template" value={template} />
 
       <Section title="① 몰 선택">
         <select
@@ -100,7 +104,49 @@ export function NewProductForm({ malls, action }: Props) {
         )}
       </Section>
 
-      <Section title="③ 견적 엔진 설정">
+      <Section
+        title="③ 상품 종류"
+        hint="선택한 종류에 맞는 옵션 그룹이 자동으로 생성됩니다. 옵션 값은 직접 채워야 합니다."
+      >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {(
+            [
+              { v: "BOOKLET", title: "책자", desc: "사이즈·페이지·표지·내지·제본·후가공" },
+              { v: "FLAT_PRINT", title: "낱장 인쇄", desc: "사이즈·수량·용지·인쇄·후가공 (명함·포스터)" },
+              { v: "NONE", title: "빈 상품", desc: "옵션 그룹을 직접 추가" },
+            ] as const
+          ).map((t) => {
+            const active = template === t.v;
+            return (
+              <button
+                key={t.v}
+                type="button"
+                onClick={() => setTemplate(t.v)}
+                className={
+                  "rounded-lg border px-3 py-2.5 text-left transition " +
+                  (active
+                    ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60")
+                }
+              >
+                <div className="text-xs font-semibold">{t.title}</div>
+                <div
+                  className={
+                    "mt-0.5 text-[10px] " +
+                    (active
+                      ? "text-zinc-300 dark:text-zinc-600"
+                      : "text-zinc-500")
+                  }
+                >
+                  {t.desc}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      <Section title="④ 견적 엔진 설정">
         <Field label="상품명 (관리용)">
           <input
             name="name"

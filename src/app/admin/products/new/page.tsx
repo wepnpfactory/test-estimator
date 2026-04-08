@@ -6,7 +6,14 @@ import { FacadeCreateForm } from "./_components/facade-create-form";
 import { ModeTabs } from "./_components/mode-tabs";
 import { createFacadeProduct } from "@/lib/cafe24/products";
 import { installScriptTag } from "@/lib/cafe24/script-tags";
-import type { Cafe24Mall } from "@/generated/prisma/client";
+import { scaffoldProductGroups } from "@/lib/product-templates";
+import type { Cafe24Mall, ProductTemplate } from "@/generated/prisma/client";
+
+function parseTemplate(raw: unknown): ProductTemplate {
+  const v = String(raw || "NONE").toUpperCase();
+  if (v === "BOOKLET" || v === "FLAT_PRINT") return v;
+  return "NONE";
+}
 
 async function buildEmbedSrc(): Promise<string> {
   const h = await headers();
@@ -54,6 +61,8 @@ async function createProduct(formData: FormData) {
   const mall = await prisma.cafe24Mall.findUnique({ where: { id: mallId } });
   if (!mall) throw new Error("연결된 몰을 찾을 수 없습니다.");
 
+  const template = parseTemplate(formData.get("template"));
+
   const product = await prisma.product.create({
     data: {
       mallId,
@@ -62,8 +71,11 @@ async function createProduct(formData: FormData) {
       cafe24ProductNo,
       basePrice: Math.max(0, basePrice),
       status: "DRAFT",
+      template,
     },
   });
+
+  await scaffoldProductGroups(product.id, template);
 
   // 신규 연결 후 embed.js 가 몰에 설치되어 있는지 확인 + 없으면 설치
   if (mall.accessToken) await ensureScriptTagInstalled(mall);
@@ -101,6 +113,7 @@ async function createFacadeAndLink(formData: FormData) {
     display,
   });
 
+  const template = parseTemplate(formData.get("template"));
   const slug = `${mall.mallId}-${created.productNo}`;
   const product = await prisma.product.create({
     data: {
@@ -110,9 +123,11 @@ async function createFacadeAndLink(formData: FormData) {
       cafe24ProductNo: created.productNo,
       basePrice: Math.floor(price),
       status: "DRAFT",
+      template,
     },
   });
 
+  await scaffoldProductGroups(product.id, template);
   await ensureScriptTagInstalled(mall);
 
   redirect(`/admin/products/${product.id}`);

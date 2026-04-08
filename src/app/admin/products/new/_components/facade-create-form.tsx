@@ -28,6 +28,9 @@ export function FacadeCreateForm({ malls, action }: Props) {
   const [categoryNo, setCategoryNo] = useState<number | "">("");
   const [display, setDisplay] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">(
+    "FLAT_PRINT",
+  );
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
   return (
     <form action={onSubmit} className="space-y-6">
       <input type="hidden" name="mallId" value={mallId} />
+      <input type="hidden" name="template" value={template} />
       <Section title="① 몰 선택">
         <select
           value={mallId}
@@ -73,7 +77,49 @@ export function FacadeCreateForm({ malls, action }: Props) {
       </Section>
 
       <Section
-        title="② 새 디스플레이 상품 정보"
+        title="② 상품 종류"
+        hint="선택한 종류에 맞는 옵션 그룹이 자동으로 생성됩니다."
+      >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {(
+            [
+              { v: "BOOKLET", title: "책자", desc: "사이즈·페이지·표지·내지·제본" },
+              { v: "FLAT_PRINT", title: "낱장 인쇄", desc: "명함·포스터" },
+              { v: "NONE", title: "빈 상품", desc: "직접 추가" },
+            ] as const
+          ).map((t) => {
+            const active = template === t.v;
+            return (
+              <button
+                key={t.v}
+                type="button"
+                onClick={() => setTemplate(t.v)}
+                className={
+                  "rounded-lg border px-3 py-2.5 text-left transition " +
+                  (active
+                    ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900")
+                }
+              >
+                <div className="text-xs font-semibold">{t.title}</div>
+                <div
+                  className={
+                    "mt-0.5 text-[10px] " +
+                    (active
+                      ? "text-zinc-300 dark:text-zinc-600"
+                      : "text-zinc-500")
+                  }
+                >
+                  {t.desc}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      <Section
+        title="③ 새 디스플레이 상품 정보"
         hint="Cafe24에 새로 등록할 진열용 상품의 기본 정보입니다."
       >
         <Field label="상품명">
