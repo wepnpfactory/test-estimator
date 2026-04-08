@@ -126,7 +126,9 @@ function buildEmbedScript(apiOrigin: string): string {
       '.te-dim-x{color:#888;font-size:14px}',
       '.te-dim-unit{color:#888;font-size:12px}',
       '.te-dim-resolved{margin-top:6px;font-size:11px;color:#666}',
-      '.te-dim-error{color:#dc2626}'
+      '.te-dim-error{color:#dc2626}',
+      '.te-dim-input-error{border-color:#dc2626;background:#fef2f2}',
+      '.te-dim-hint{margin-top:4px;font-size:10px;color:#999}'
     ].join('');
     root.appendChild(style);
 
@@ -201,20 +203,48 @@ function buildEmbedScript(apiOrigin: string): string {
       visibleGroups.forEach(function(g){
         if (g.kind === 'DIMENSIONS') {
           var d = state.dims[g.id] || { w: '', h: '' };
-          var resolved = (d.w && d.h) ? findFittingItem(g, Number(d.w), Number(d.h)) : null;
-          var resolvedLabel = resolved
-            ? '<div class="te-dim-resolved">→ ' + escapeHtml(resolved.label)
-                + (resolved.addPrice ? ' (' + (resolved.addPrice >= 0 ? '+' : '') + fmtPrice(resolved.addPrice) + ')' : '')
-                + '</div>'
-            : (d.w && d.h ? '<div class="te-dim-resolved te-dim-error">맞는 사이즈가 없습니다</div>' : '');
+          // 그룹 max 와 옵션들의 max 중 큰 값을 절대 최대로 사용
+          var maxItemW = 0, maxItemH = 0;
+          g.items.forEach(function(it){
+            if (it.widthMm  != null && it.widthMm  > maxItemW) maxItemW = it.widthMm;
+            if (it.heightMm != null && it.heightMm > maxItemH) maxItemH = it.heightMm;
+          });
+          var maxW = g.maxWidthMm  || maxItemW || null;
+          var maxH = g.maxHeightMm || maxItemH || null;
+
+          var wNum = Number(d.w), hNum = Number(d.h);
+          var overW = maxW && wNum > maxW;
+          var overH = maxH && hNum > maxH;
+          var resolved = (wNum && hNum && !overW && !overH)
+            ? findFittingItem(g, wNum, hNum)
+            : null;
+
+          var resolvedLabel = '';
+          if (overW || overH) {
+            resolvedLabel = '<div class="te-dim-resolved te-dim-error">최대 ' + (maxW || '?') + '×' + (maxH || '?') + 'mm 까지 입력 가능합니다</div>';
+          } else if (resolved) {
+            resolvedLabel = '<div class="te-dim-resolved">→ ' + escapeHtml(resolved.label)
+              + (resolved.addPrice ? ' (' + (resolved.addPrice >= 0 ? '+' : '') + fmtPrice(resolved.addPrice) + ')' : '')
+              + '</div>';
+          } else if (wNum && hNum) {
+            resolvedLabel = '<div class="te-dim-resolved te-dim-error">맞는 사이즈가 없습니다</div>';
+          }
+
+          var maxAttrW = maxW ? ' max="' + maxW + '"' : '';
+          var maxAttrH = maxH ? ' max="' + maxH + '"' : '';
+          var hint = (maxW && maxH)
+            ? '<div class="te-dim-hint">최대 ' + maxW + ' × ' + maxH + ' mm</div>'
+            : '';
+
           html += '<div class="te-row">'
             + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
             + '<div class="te-dim-row">'
-              + '<input type="number" min="1" placeholder="가로" data-dim="w" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.w)) + '" class="te-dim-input" />'
+              + '<input type="number" min="1"' + maxAttrW + ' placeholder="가로" data-dim="w" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.w)) + '" class="te-dim-input' + (overW ? ' te-dim-input-error' : '') + '" />'
               + '<span class="te-dim-x">×</span>'
-              + '<input type="number" min="1" placeholder="세로" data-dim="h" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.h)) + '" class="te-dim-input" />'
+              + '<input type="number" min="1"' + maxAttrH + ' placeholder="세로" data-dim="h" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.h)) + '" class="te-dim-input' + (overH ? ' te-dim-input-error' : '') + '" />'
               + '<span class="te-dim-unit">mm</span>'
             + '</div>'
+            + hint
             + resolvedLabel
             + '</div>';
           return;
