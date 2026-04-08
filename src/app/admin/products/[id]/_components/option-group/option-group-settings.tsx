@@ -60,9 +60,37 @@ export function OptionGroupSettings({
               <option value="SWATCH">SWATCH — 이미지 카드</option>
               <option value="CHECKBOX">CHECKBOX — 다중 선택</option>
               <option value="NUMBER">NUMBER — 숫자 입력</option>
+              <option value="CASCADE">CASCADE — 2단 셀렉트 (종이 → 평량)</option>
             </select>
           </Field>
         </div>
+
+        {group.displayType === "CASCADE" && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="1차 셀렉트 라벨"
+              hint="예: 종이"
+            >
+              <input
+                name="facetALabel"
+                defaultValue={group.facetALabel ?? ""}
+                placeholder="종이"
+                className={inputFull}
+              />
+            </Field>
+            <Field
+              label="2차 셀렉트 라벨"
+              hint="예: 평량"
+            >
+              <input
+                name="facetBLabel"
+                defaultValue={group.facetBLabel ?? ""}
+                placeholder="평량"
+                className={inputFull}
+              />
+            </Field>
+          </div>
+        )}
 
         <div
           className={`grid grid-cols-1 gap-4 ${group.displayType === "CHECKBOX" ? "sm:grid-cols-2" : ""}`}

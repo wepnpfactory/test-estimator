@@ -18,15 +18,27 @@ export function OptionItemHeader({ group }: Props) {
   const showThickness =
     group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
   const showImage = group.displayType === "SWATCH";
+  const showFacets = group.displayType === "CASCADE";
 
   return (
     <li className="flex items-center gap-1 bg-surface-muted/40 px-2 py-1.5">
       {/* move chevrons spacer (w-5) */}
       <div className="w-5 shrink-0" />
 
+      {showFacets && (
+        <>
+          <div className={`${cellCls} w-24 text-left`}>
+            {group.facetALabel || "1차"}
+          </div>
+          <div className={`${cellCls} w-20 text-left`}>
+            {group.facetBLabel || "2차"}
+          </div>
+        </>
+      )}
+
       <div className={`${cellCls} min-w-0 flex-1 text-left`}>표시명</div>
       <div className={`${cellCls} w-24 text-left`}>value</div>
-      <div className={`${cellCls} w-24 text-right`}>추가금액</div>
+      <div className={`${cellCls} w-32 text-right`}>추가금액</div>
 
       {showMultiplier && <div className={`${cellCls} w-16 text-right`}>장·부수</div>}
       {showRange && (
@@ -46,6 +58,7 @@ export function OptionItemHeader({ group }: Props) {
       )}
       {showThickness && <div className={`${cellCls} w-16 text-right`}>두께</div>}
 
+      <div className={`${cellCls} w-20 text-right`}>비활성 조건</div>
       <div className={`${cellCls} w-16 text-right`}>+영업일</div>
 
       {showImage && <div className={`${cellCls} w-32 text-left`}>이미지</div>}

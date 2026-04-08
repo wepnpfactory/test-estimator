@@ -3,6 +3,11 @@
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { buttonGhostCls, inputCls } from "../form-styles";
+import {
+  ConditionPicker,
+  parseConditions,
+  useConditionPatch,
+} from "./condition-picker";
 import type {
   OptionGroupActions,
   OptionGroupWithItems,
@@ -15,6 +20,7 @@ interface Props {
   item: OptionItemRowType;
   index: number;
   total: number;
+  precedingGroups: OptionGroupWithItems[];
   actions: OptionGroupActions;
 }
 
@@ -115,6 +121,7 @@ export function OptionItemRow({
   item,
   index,
   total,
+  precedingGroups,
   actions,
 }: Props) {
   const [, startTransition] = useTransition();
@@ -125,6 +132,7 @@ export function OptionItemRow({
   const showThickness =
     group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
   const showImage = group.displayType === "SWATCH";
+  const showFacets = group.displayType === "CASCADE";
   const suffix = priceSuffix(group);
 
   function patch(name: string, value: string) {
@@ -176,6 +184,46 @@ export function OptionItemRow({
         </form>
       </div>
 
+      {/* CASCADE 1차/2차 */}
+      {showFacets && (
+        <>
+          <div className="w-24">
+            <Cell
+              name="facetA"
+              defaultValue={item.facetA}
+              placeholder={group.facetALabel ?? "1차"}
+              display={
+                <span className="truncate text-foreground">
+                  {item.facetA || (
+                    <span className="text-text-disabled">
+                      {group.facetALabel ?? "1차"}
+                    </span>
+                  )}
+                </span>
+              }
+              patch={patch}
+            />
+          </div>
+          <div className="w-20">
+            <Cell
+              name="facetB"
+              defaultValue={item.facetB}
+              placeholder={group.facetBLabel ?? "2차"}
+              display={
+                <span className="truncate text-foreground">
+                  {item.facetB || (
+                    <span className="text-text-disabled">
+                      {group.facetBLabel ?? "2차"}
+                    </span>
+                  )}
+                </span>
+              }
+              patch={patch}
+            />
+          </div>
+        </>
+      )}
+
       {/* label */}
       <div className="min-w-0 flex-1">
         <Cell
@@ -206,7 +254,7 @@ export function OptionItemRow({
       </div>
 
       {/* addPrice */}
-      <div className="w-24">
+      <div className="w-32">
         <Cell
           name="addPrice"
           defaultValue={item.addPrice}
@@ -329,6 +377,15 @@ export function OptionItemRow({
         </div>
       )}
 
+      {/* disabledWhen — 모달로 선행 옵션 선택 */}
+      <div className="flex w-20 justify-end">
+        <DisabledWhenCell
+          item={item}
+          precedingGroups={precedingGroups}
+          patch={patch}
+        />
+      </div>
+
       {/* leadTime 칼럼 — 항상 노출, 입력 없을 땐 dash */}
       <div className="w-16">
         <Cell
@@ -382,3 +439,25 @@ export function OptionItemRow({
 
 // buttonGhostCls 는 더 이상 쓰지 않지만 re-export 호환용으로 보관
 void buttonGhostCls;
+
+function DisabledWhenCell({
+  item,
+  precedingGroups,
+  patch,
+}: {
+  item: OptionItemRowType;
+  precedingGroups: OptionGroupWithItems[];
+  patch: (name: string, value: string) => void;
+}) {
+  const value = parseConditions(item.disabledWhen);
+  const { apply, pending } = useConditionPatch("disabledWhen", patch);
+  return (
+    <ConditionPicker
+      title="비활성 조건"
+      value={value}
+      precedingGroups={precedingGroups}
+      onChange={apply}
+      pending={pending}
+    />
+  );
+}
