@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { updateFacadeProductPrice } from "@/lib/cafe24/products";
-import { BaseAreaForm } from "./_components/base-area-form";
-import { TemplatePicker } from "./_components/template-picker";
+import { ProductTypePanel } from "./_components/product-type-panel";
 import { type ParsedItem } from "./_components/option-bulk-paste";
 import {
   AddOptionGroupForm,
@@ -566,21 +565,16 @@ export default async function EditProductPage({
             {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
             {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
           </p>
-          <TemplatePicker
+          <ProductTypePanel
             productId={product.id}
-            current={product.template ?? "NONE"}
+            initialTemplate={product.template ?? "NONE"}
             hasGroups={product.optionGroups.length > 0}
-            action={updateProductTemplate}
-            resetAction={resetProductGroupsFromTemplate}
-          />
-
-          <BaseAreaForm
-            productId={product.id}
-            current={product.baseAreaMm2 ?? 62370}
-            bleed={product.bleedMm ?? 3}
+            baseAreaMm2={product.baseAreaMm2 ?? 62370}
+            bleedMm={product.bleedMm ?? 3}
             leadTimeDays={product.leadTimeDays ?? 1}
-            template={product.template ?? "NONE"}
-            action={updateProductMeta}
+            templateAction={updateProductTemplate}
+            resetAction={resetProductGroupsFromTemplate}
+            metaAction={updateProductMeta}
           />
           <span
             className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${

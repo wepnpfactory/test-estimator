@@ -11,6 +11,8 @@ interface Props {
   hasGroups: boolean;
   action: (productId: string, formData: FormData) => Promise<void>;
   resetAction?: (productId: string) => Promise<void>;
+  /** 라디오 클릭 시 (저장 전) 상위 컴포넌트에 로컬 변경 알림 */
+  onLocalChange?: (v: Template) => void;
 }
 
 const OPTIONS: { v: Template; label: string }[] = [
@@ -25,6 +27,7 @@ export function TemplatePicker({
   hasGroups,
   action,
   resetAction,
+  onLocalChange,
 }: Props) {
   const [value, setValue] = useState<Template>(current);
   const [pending, startTransition] = useTransition();
