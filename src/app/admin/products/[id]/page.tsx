@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { updateFacadeProductPrice } from "@/lib/cafe24/products";
 import { CollapsibleSection } from "./_components/collapsible-section";
+import { BaseAreaForm } from "./_components/base-area-form";
 import {
   OptionBulkPaste,
   type ParsedItem,
@@ -353,27 +354,11 @@ export default async function EditProductPage({
             {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
             {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
           </p>
-          <form
-            action={updateProductMeta.bind(null, product.id)}
-            className="mt-2 flex items-center gap-2 text-[11px]"
-          >
-            <label className="flex items-center gap-1 text-zinc-500">
-              기준 면적
-              <input
-                type="number"
-                name="baseAreaMm2"
-                defaultValue={product.baseAreaMm2 ?? 62370}
-                className="w-24 rounded border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
-              />
-              mm²
-            </label>
-            <button className="rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
-              저장
-            </button>
-            <span className="text-zinc-400">
-              perArea 곱셈의 분모. 기본 A4 = 62370
-            </span>
-          </form>
+          <BaseAreaForm
+            productId={product.id}
+            current={product.baseAreaMm2 ?? 62370}
+            action={updateProductMeta}
+          />
           <span
             className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
               product.status === "PUBLISHED"
