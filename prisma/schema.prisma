@@ -128,6 +128,7 @@ model OptionGroup {
   maxDirectInput   Int?
   // 책자류 구분: 이 그룹이 내지/표지 종이를 의미하면 표시
   // (책등 두께 / 표지 사이즈 자동 계산에 사용)
+  // deprecated — kind 가 INNER_PAPER / COVER_PAPER 면 자동 true 로 간주 (마이그레이션 백필 완료 후 제거 예정)
   isInnerPaper     Boolean @default(false)
   isCoverPaper     Boolean @default(false)
 
@@ -142,6 +143,8 @@ enum OptionGroupKind {
   SHEET_COUNT // 페이지수 그룹 — 선택된 item.multiplier 가 sheet 수
   QUANTITY    // 부수 그룹 — 선택된 item.multiplier 가 quantity
   DIMENSIONS  // 사이즈 그룹 — 사용자가 가로/세로 mm 입력, 가장 작은 fit 옵션 자동 선택
+  INNER_PAPER // 내지 종이 — NORMAL 과 동일 렌더, 책등/표지 사이즈 계산에 두께 사용
+  COVER_PAPER // 표지 종이 — NORMAL 과 동일 렌더, 책등/표지 사이즈 계산에 두께 사용
 }
 
 enum OptionDisplayType {

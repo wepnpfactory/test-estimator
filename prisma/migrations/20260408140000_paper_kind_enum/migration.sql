@@ -1,0 +1,3 @@
+-- Add INNER_PAPER, COVER_PAPER to OptionGroupKind
+ALTER TYPE "OptionGroupKind" ADD VALUE 'INNER_PAPER';
+ALTER TYPE "OptionGroupKind" ADD VALUE 'COVER_PAPER';
