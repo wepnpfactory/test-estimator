@@ -57,6 +57,7 @@ export async function GET(
       optionGroups: product.optionGroups.map((g) => ({
         id: g.id,
         name: g.name,
+        value: g.value,
         displayType: g.displayType,
         required: g.required,
         kind: g.kind,

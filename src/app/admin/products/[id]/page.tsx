@@ -13,13 +13,29 @@ type GroupKindStr = "NORMAL" | "SHEET_COUNT" | "QUANTITY";
 
 // ─── server actions ─────────────────────────────────────────
 
+function slugifyValue(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
 async function addOptionGroup(productId: string, formData: FormData) {
   "use server";
   const name = String(formData.get("name") || "").trim();
+  const valueRaw = String(formData.get("value") || "").trim();
   if (!name) return;
   const count = await prisma.optionGroup.count({ where: { productId } });
+  let value = valueRaw || slugifyValue(name);
+  // 중복 회피
+  const existing = await prisma.optionGroup.findFirst({
+    where: { productId, value },
+    select: { id: true },
+  });
+  if (existing) value = `${value}_${count + 1}`;
   await prisma.optionGroup.create({
-    data: { productId, name, sortOrder: count },
+    data: { productId, name, value, sortOrder: count },
   });
   revalidatePath(`/admin/products/${productId}`);
 }
@@ -32,6 +48,8 @@ async function updateOptionGroup(
   "use server";
   const kindRaw = String(formData.get("kind") || "NORMAL") as GroupKindStr;
   const required = formData.get("required") === "on";
+  const name = String(formData.get("name") || "").trim();
+  const value = String(formData.get("value") || "").trim();
   const showWhenText = String(formData.get("showWhen") || "").trim();
   let showWhen: unknown = null;
   if (showWhenText) {
@@ -49,6 +67,8 @@ async function updateOptionGroup(
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
+      ...(name ? { name } : {}),
+      ...(value ? { value } : {}),
       kind: kindRaw,
       required,
       showWhen: showWhen as never,
@@ -324,11 +344,13 @@ export default async function EditProductPage({
             const addPrices = g.items.map((i) => i.addPrice);
             const minAdd = addPrices.length ? Math.min(...addPrices) : 0;
             const maxAdd = addPrices.length ? Math.max(...addPrices) : 0;
+            const fmtSigned = (n: number) =>
+              `${n > 0 ? "+" : ""}${n.toLocaleString()}`;
             const priceRange = !itemCount
               ? "—"
               : minAdd === maxAdd
-                ? `+${minAdd.toLocaleString()}원`
-                : `+${minAdd.toLocaleString()} ~ +${maxAdd.toLocaleString()}원`;
+                ? `${fmtSigned(minAdd)}원`
+                : `${fmtSigned(minAdd)} ~ ${fmtSigned(maxAdd)}원`;
 
             const summary = (
               <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -398,7 +420,7 @@ export default async function EditProductPage({
                     <CollapsibleSection
                       storageKey={`optgrp:${product.id}:${g.id}`}
                       summary={summary}
-                    >
+                    >{/* body */}
                       <div className="space-y-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
                         {/* 고급 설정 (접힘 기본) */}
                         <details className="rounded-md bg-zinc-50/70 open:pb-3 dark:bg-zinc-950/40">
@@ -489,21 +511,7 @@ export default async function EditProductPage({
                                 </label>
                               </div>
                             )}
-                            <div className="flex justify-between gap-2 sm:col-span-3">
-                              <form
-                                action={deleteOptionGroup.bind(
-                                  null,
-                                  product.id,
-                                  g.id,
-                                )}
-                              >
-                                <button
-                                  type="submit"
-                                  className="rounded-md border border-rose-200 px-2.5 py-1 text-[11px] font-medium text-rose-600 hover:bg-rose-50"
-                                >
-                                  그룹 삭제
-                                </button>
-                              </form>
+                            <div className="flex justify-end gap-2 sm:col-span-3">
                               <button
                                 type="submit"
                                 className="rounded-md bg-zinc-900 px-3 py-1 text-[11px] font-medium text-white dark:bg-white dark:text-zinc-900"
@@ -578,7 +586,7 @@ export default async function EditProductPage({
                                     {it.value}
                                   </span>
                                   <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
-                                    {it.addPrice >= 0 ? "+" : ""}
+                                    {it.addPrice > 0 ? "+" : ""}
                                     {it.addPrice.toLocaleString()}
                                     {it.perSheet && " ×장"}
                                     {it.perQuantity && " ×부"}
