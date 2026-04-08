@@ -43,12 +43,6 @@ const ALL_PRESETS: Preset[] = Array.from(
   ).values(),
 );
 
-function getPresets(template: string): Preset[] {
-  if (template === "BOOKLET") return BOOKLET_PRESETS;
-  if (template === "FLAT_PRINT") return FLAT_PRESETS;
-  return ALL_PRESETS;
-}
-
 interface Props {
   productId: string;
   current: number;
@@ -70,7 +64,6 @@ export function BaseAreaForm({
   template,
   action,
 }: Props) {
-  const presets = getPresets(template);
   const [w, setW] = useState<number>(() => {
     const m = findMatchingPreset(current, ALL_PRESETS);
     return m ? m.w : Math.round(Math.sqrt(current));
@@ -117,22 +110,26 @@ export function BaseAreaForm({
       <select
         onChange={(e) => applyPreset(e.target.value)}
         defaultValue=""
-        className={inputCls + " w-40"}
+        className={inputCls + " w-44"}
       >
-        <option value="">
-          프리셋 ({template === "BOOKLET"
-            ? "책자"
-            : template === "FLAT_PRINT"
-              ? "낱장"
-              : "전체"}
-          )
-        </option>
-        {presets.map((p) => (
-          <option key={p.label} value={p.label}>
-            {p.label}
-          </option>
-        ))}
+        <option value="">프리셋 선택</option>
+        <optgroup label="📖 책자">
+          {BOOKLET_PRESETS.map((p) => (
+            <option key={`b-${p.label}`} value={p.label}>
+              {p.label}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="📄 낱장 인쇄">
+          {FLAT_PRESETS.map((p) => (
+            <option key={`f-${p.label}`} value={p.label}>
+              {p.label}
+            </option>
+          ))}
+        </optgroup>
       </select>
+      {/* template 변수는 prop 유지 — 향후 추천 프리셋 하이라이트 등에 활용 */}
+      <input type="hidden" name="templateCtx" value={template} />
       <input
         type="number"
         value={w}
