@@ -351,7 +351,7 @@ export default async function EditProductPage({
           <p className="mt-1 text-sm text-zinc-500">
             {product.mall.name} · Cafe24 #{product.cafe24ProductNo} · 기본가{" "}
             {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
-            {product.baseAreaMm2.toLocaleString()}mm²
+            {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
           </p>
           <form
             action={updateProductMeta.bind(null, product.id)}
@@ -362,7 +362,7 @@ export default async function EditProductPage({
               <input
                 type="number"
                 name="baseAreaMm2"
-                defaultValue={product.baseAreaMm2}
+                defaultValue={product.baseAreaMm2 ?? 62370}
                 className="w-24 rounded border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
               />
               mm²
