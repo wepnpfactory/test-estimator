@@ -113,12 +113,24 @@ async function updateOptionItem(
   const multiplier = Number(formData.get("multiplier") || 1);
   const perSheet = formData.get("perSheet") === "on";
   const perQuantity = formData.get("perQuantity") === "on";
+  const widthRaw = String(formData.get("widthMm") || "").trim();
+  const heightRaw = String(formData.get("heightMm") || "").trim();
+  const widthMm = widthRaw === "" ? null : Number(widthRaw);
+  const heightMm = heightRaw === "" ? null : Number(heightRaw);
   await prisma.optionItem.update({
     where: { id: itemId },
     data: {
       multiplier: Number.isFinite(multiplier) ? multiplier : 1,
       perSheet,
       perQuantity,
+      widthMm:
+        widthMm !== null && Number.isFinite(widthMm) && widthMm > 0
+          ? widthMm
+          : null,
+      heightMm:
+        heightMm !== null && Number.isFinite(heightMm) && heightMm > 0
+          ? heightMm
+          : null,
     },
   });
   revalidatePath(`/admin/products/${productId}`);
@@ -348,6 +360,7 @@ export default async function EditProductPage({
                       <option value="NORMAL">일반</option>
                       <option value="SHEET_COUNT">페이지수 (sheet)</option>
                       <option value="QUANTITY">부수 (quantity)</option>
+                      <option value="DIMENSIONS">사이즈 (가로×세로)</option>
                     </select>
                   </label>
                   <label className="flex items-center gap-1.5 pt-4">
@@ -463,7 +476,7 @@ export default async function EditProductPage({
                       </div>
                       <form
                         action={updateOptionItem.bind(null, product.id, it.id)}
-                        className="mt-1 flex items-center gap-3 text-[10px] text-zinc-500"
+                        className="mt-1 flex flex-wrap items-center gap-3 text-[10px] text-zinc-500"
                       >
                         <label className="flex items-center gap-1">
                           mult
@@ -490,6 +503,30 @@ export default async function EditProductPage({
                           />
                           ×부
                         </label>
+                        {g.kind === "DIMENSIONS" && (
+                          <>
+                            <label className="flex items-center gap-1">
+                              W
+                              <input
+                                type="number"
+                                name="widthMm"
+                                defaultValue={it.widthMm ?? ""}
+                                className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                              />
+                              mm
+                            </label>
+                            <label className="flex items-center gap-1">
+                              H
+                              <input
+                                type="number"
+                                name="heightMm"
+                                defaultValue={it.heightMm ?? ""}
+                                className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                              />
+                              mm
+                            </label>
+                          </>
+                        )}
                         <button className="ml-auto rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
                           저장
                         </button>

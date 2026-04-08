@@ -69,6 +69,8 @@ export async function GET(
           multiplier: i.multiplier,
           perSheet: i.perSheet,
           perQuantity: i.perQuantity,
+          widthMm: i.widthMm,
+          heightMm: i.heightMm,
         })),
       })),
     },
