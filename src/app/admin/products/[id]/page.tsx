@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import {
+  OptionBulkPaste,
+  type ParsedItem,
+} from "./_components/option-bulk-paste";
 
 async function addOptionGroup(productId: string, formData: FormData) {
   "use server";
@@ -13,7 +17,11 @@ async function addOptionGroup(productId: string, formData: FormData) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function addOptionItem(groupId: string, productId: string, formData: FormData) {
+async function addOptionItem(
+  groupId: string,
+  productId: string,
+  formData: FormData,
+) {
   "use server";
   const label = String(formData.get("label") || "").trim();
   const value = String(formData.get("value") || "").trim();
@@ -22,6 +30,27 @@ async function addOptionItem(groupId: string, productId: string, formData: FormD
   const count = await prisma.optionItem.count({ where: { groupId } });
   await prisma.optionItem.create({
     data: { groupId, label, value, addPrice, sortOrder: count },
+  });
+  revalidatePath(`/admin/products/${productId}`);
+}
+
+async function bulkAddOptionItems(
+  groupId: string,
+  productId: string,
+  items: ParsedItem[],
+) {
+  "use server";
+  if (items.length === 0) return;
+  const start = await prisma.optionItem.count({ where: { groupId } });
+  await prisma.optionItem.createMany({
+    data: items.map((it, i) => ({
+      groupId,
+      label: it.label,
+      value: it.value,
+      addPrice: it.addPrice,
+      sortOrder: start + i,
+    })),
+    skipDuplicates: true,
   });
   revalidatePath(`/admin/products/${productId}`);
 }
@@ -83,11 +112,18 @@ export default async function EditProductPage({
               <div className="text-sm font-medium">{g.name}</div>
               <ul className="mt-2 space-y-1 text-sm">
                 {g.items.map((it) => (
-                  <li key={it.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                  <li
+                    key={it.id}
+                    className="flex justify-between text-zinc-600 dark:text-zinc-400"
+                  >
                     <span>
-                      {it.label} <span className="text-zinc-400">({it.value})</span>
+                      {it.label}{" "}
+                      <span className="text-zinc-400">({it.value})</span>
                     </span>
-                    <span>+{it.addPrice.toLocaleString()}원</span>
+                    <span>
+                      {it.addPrice >= 0 ? "+" : ""}
+                      {it.addPrice.toLocaleString()}원
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -95,8 +131,16 @@ export default async function EditProductPage({
                 action={addOptionItem.bind(null, g.id, product.id)}
                 className="mt-3 flex gap-2"
               >
-                <input name="label" placeholder="표시명" className={smallInputCls} />
-                <input name="value" placeholder="value" className={smallInputCls} />
+                <input
+                  name="label"
+                  placeholder="표시명"
+                  className={smallInputCls}
+                />
+                <input
+                  name="value"
+                  placeholder="value"
+                  className={smallInputCls}
+                />
                 <input
                   name="addPrice"
                   type="number"
@@ -107,6 +151,13 @@ export default async function EditProductPage({
                   추가
                 </button>
               </form>
+              <div className="mt-2">
+                <OptionBulkPaste
+                  groupId={g.id}
+                  productId={product.id}
+                  bulkAction={bulkAddOptionItems}
+                />
+              </div>
             </div>
           ))}
         </div>
