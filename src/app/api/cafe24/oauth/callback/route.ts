@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CAFE24_SCOPES, exchangeCodeForToken } from "@/lib/cafe24/oauth";
+import { fetchStorefrontOrigin } from "@/lib/cafe24/store";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
       code,
     });
 
-    await prisma.cafe24Mall.upsert({
+    const mall = await prisma.cafe24Mall.upsert({
       where: { mallId },
       update: {
         accessToken: token.access_token,
@@ -55,6 +56,17 @@ export async function GET(req: NextRequest) {
         scopes: token.scopes ?? Array.from(CAFE24_SCOPES),
       },
     });
+
+    // best-effort: 실제 storefront 도메인 알아내서 저장 (실패해도 OAuth 자체는 성공)
+    try {
+      const origin = await fetchStorefrontOrigin(mall);
+      await prisma.cafe24Mall.update({
+        where: { id: mall.id },
+        data: { storefrontOrigin: origin },
+      });
+    } catch (e) {
+      console.warn("[oauth] failed to fetch storefront origin:", e);
+    }
 
     const res = NextResponse.redirect(new URL("/admin/malls", req.url));
     res.cookies.delete("cafe24_oauth_state");
