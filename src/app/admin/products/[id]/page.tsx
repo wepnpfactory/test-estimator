@@ -42,12 +42,24 @@ async function updateOptionGroup(
       // 형식 오류면 무시 (아래 try-catch 에서 silent fail)
     }
   }
+  const maxWidthRaw = String(formData.get("maxWidthMm") || "").trim();
+  const maxHeightRaw = String(formData.get("maxHeightMm") || "").trim();
+  const maxWidthMm = maxWidthRaw === "" ? null : Number(maxWidthRaw);
+  const maxHeightMm = maxHeightRaw === "" ? null : Number(maxHeightRaw);
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
       kind: kindRaw,
       required,
       showWhen: showWhen as never,
+      maxWidthMm:
+        maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0
+          ? maxWidthMm
+          : null,
+      maxHeightMm:
+        maxHeightMm !== null && Number.isFinite(maxHeightMm) && maxHeightMm > 0
+          ? maxHeightMm
+          : null,
     },
   });
   revalidatePath(`/admin/products/${productId}`);
@@ -449,6 +461,34 @@ export default async function EditProductPage({
                                 />
                               </label>
                             </div>
+                            {g.kind === "DIMENSIONS" && (
+                              <div className="grid grid-cols-2 gap-2 sm:col-span-3">
+                                <label className="flex flex-col gap-1">
+                                  <span className="text-zinc-500">
+                                    허용 최대 가로 (mm)
+                                  </span>
+                                  <input
+                                    type="number"
+                                    name="maxWidthMm"
+                                    defaultValue={g.maxWidthMm ?? ""}
+                                    placeholder="비우면 가장 큰 옵션 기준"
+                                    className={smallInputCls}
+                                  />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                  <span className="text-zinc-500">
+                                    허용 최대 세로 (mm)
+                                  </span>
+                                  <input
+                                    type="number"
+                                    name="maxHeightMm"
+                                    defaultValue={g.maxHeightMm ?? ""}
+                                    placeholder="비우면 가장 큰 옵션 기준"
+                                    className={smallInputCls}
+                                  />
+                                </label>
+                              </div>
+                            )}
                             <div className="flex justify-between gap-2 sm:col-span-3">
                               <form
                                 action={deleteOptionGroup.bind(

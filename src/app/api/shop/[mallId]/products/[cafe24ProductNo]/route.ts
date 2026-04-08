@@ -61,6 +61,8 @@ export async function GET(
         required: g.required,
         kind: g.kind,
         showWhen: g.showWhen ?? null,
+        maxWidthMm: g.maxWidthMm ?? null,
+        maxHeightMm: g.maxHeightMm ?? null,
         items: g.items.map((i) => ({
           id: i.id,
           label: i.label,
