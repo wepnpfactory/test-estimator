@@ -42,16 +42,8 @@ export interface AttachOptionsParams {
  * 동적 상품에 추가옵션(텍스트 입력)을 부착한다.
  * 실패해도 throw 만 한다 (호출 측에서 보상 처리).
  */
-export async function attachAdditionalOptions(
-  params: AttachOptionsParams,
-): Promise<void> {
-  const {
-    mall,
-    productNo,
-    shopNo,
-    dummyOption = { name: "수량", value: "1" },
-    additionalOptions,
-  } = params;
+export async function attachAdditionalOptions(params: AttachOptionsParams): Promise<void> {
+  const { mall, productNo, shopNo, dummyOption = { name: "수량", value: "1" }, additionalOptions } = params;
 
   if (additionalOptions.length === 0) return;
 
@@ -74,14 +66,10 @@ export async function attachAdditionalOptions(
     })),
   };
 
-  await cafe24Fetch(
-    mall,
-    `/api/v2/admin/products/${productNo}/options`,
-    {
-      method: "POST",
-      body: { shop_no: shopNo ?? mall.defaultShopNo ?? 1, requests },
-    },
-  );
+  await cafe24Fetch(mall, `/api/v2/admin/products/${productNo}/options`, {
+    method: "POST",
+    body: { shop_no: shopNo ?? mall.defaultShopNo ?? 1, requests },
+  });
 }
 
 /**
@@ -91,9 +79,7 @@ export async function attachAdditionalOptions(
  *
  * (비공식 — 테스트몰 검증 필요. 다른 키가 맞다면 이 함수만 수정하면 된다.)
  */
-export function buildAdditionalOptionFormFields(
-  values: Record<string, string>,
-): Record<string, string> {
+export function buildAdditionalOptionFormFields(values: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(values)) {
     out[`option_add_text_required[${k}]`] = v;

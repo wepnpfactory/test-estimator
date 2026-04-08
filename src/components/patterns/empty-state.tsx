@@ -1,29 +1,19 @@
-import * as React from "react"
-import { cn } from "../ui/utils"
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
+import * as React from "react";
+import { cn } from "../ui/utils";
 
 interface EmptyStateProps extends React.ComponentProps<"div"> {
-  icon?: LucideIcon
-  title: string
-  description?: string
-  action?: React.ReactNode
+  icon?: LucideIcon;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
 }
 
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-  action,
-  className,
-  ...props
-}: EmptyStateProps) {
+function EmptyState({ icon: Icon, title, description, action, className, ...props }: EmptyStateProps) {
   return (
     <div
       data-slot="empty-state"
-      className={cn(
-        "flex flex-col items-center justify-center py-12 px-6 text-center",
-        className,
-      )}
+      className={cn("flex flex-col items-center justify-center py-12 px-6 text-center", className)}
       {...props}
     >
       {Icon && (
@@ -31,18 +21,12 @@ function EmptyState({
           <Icon className="size-4 text-text-tertiary" strokeWidth={1.5} />
         </div>
       )}
-      <h3 className="text-[16px] font-bold text-text-primary tracking-[-0.01em] mb-1.5">
-        {title}
-      </h3>
-      {description && (
-        <p className="text-[14px] leading-normal text-text-secondary mb-6 max-w-[280px]">
-          {description}
-        </p>
-      )}
+      <h3 className="text-[16px] font-bold text-text-primary tracking-[-0.01em] mb-1.5">{title}</h3>
+      {description && <p className="text-[14px] leading-normal text-text-secondary mb-6 max-w-70">{description}</p>}
       {action}
     </div>
-  )
+  );
 }
 
-export { EmptyState }
-export type { EmptyStateProps }
+export { EmptyState };
+export type { EmptyStateProps };

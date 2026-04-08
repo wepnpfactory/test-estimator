@@ -4,9 +4,9 @@
  * Pre-configured animation wrappers that follow the design language.
  * Install: npm install framer-motion
  */
-import * as React from "react"
-import { motion, AnimatePresence, type Variants } from "framer-motion"
-import { cn } from "./utils"
+import { AnimatePresence, motion, type Variants } from "framer-motion";
+import * as React from "react";
+import { cn } from "./utils";
 
 // ── Duration & Easing Tokens ────────────────────────
 
@@ -15,14 +15,14 @@ export const duration = {
   normal: 0.2,
   moderate: 0.3,
   slow: 0.35,
-} as const
+} as const;
 
 export const ease = {
   default: [0.25, 0.1, 0.25, 1.0],
   in: [0.4, 0, 1, 1],
   out: [0, 0, 0.2, 1],
   spring: { type: "spring" as const, damping: 25, stiffness: 300 },
-} as const
+} as const;
 
 // ── Preset Variants ─────────────────────────────────
 
@@ -30,36 +30,36 @@ export const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
   exit: { opacity: 0 },
-}
+};
 
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: 12 },
-}
+};
 
 export const slideUp: Variants = {
   hidden: { opacity: 0, y: "100%" },
   visible: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: "100%" },
-}
+};
 
 export const slideRight: Variants = {
   hidden: { x: "100%" },
   visible: { x: 0 },
   exit: { x: "100%" },
-}
+};
 
 export const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: { opacity: 1, scale: 1 },
   exit: { opacity: 0, scale: 0.95 },
-}
+};
 
 // ── FadeIn ──────────────────────────────────────────
 
 interface FadeInProps extends React.ComponentProps<typeof motion.div> {
-  delay?: number
+  delay?: number;
 }
 
 function FadeIn({ delay = 0, className, children, ...props }: FadeInProps) {
@@ -75,13 +75,13 @@ function FadeIn({ delay = 0, className, children, ...props }: FadeInProps) {
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 // ── FadeUp (Card entry animation) ───────────────────
 
 interface FadeUpProps extends React.ComponentProps<typeof motion.div> {
-  delay?: number
+  delay?: number;
 }
 
 function FadeUp({ delay = 0, className, children, ...props }: FadeUpProps) {
@@ -97,13 +97,13 @@ function FadeUp({ delay = 0, className, children, ...props }: FadeUpProps) {
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 // ── Stagger (Card grid entry) ───────────────────────
 
 interface StaggerProps extends React.ComponentProps<typeof motion.div> {
-  staggerDelay?: number
+  staggerDelay?: number;
 }
 
 function Stagger({ staggerDelay = 0.05, className, children, ...props }: StaggerProps) {
@@ -121,7 +121,7 @@ function Stagger({ staggerDelay = 0.05, className, children, ...props }: Stagger
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 function StaggerItem({ className, children, ...props }: React.ComponentProps<typeof motion.div>) {
@@ -135,16 +135,16 @@ function StaggerItem({ className, children, ...props }: React.ComponentProps<typ
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 // ── PresenceModal (Modal/Sheet enter + exit) ────────
 
 interface PresenceModalProps {
-  isOpen: boolean
-  children: React.ReactNode
-  variant?: "fade" | "slideUp" | "scale"
-  className?: string
+  isOpen: boolean;
+  children: React.ReactNode;
+  variant?: "fade" | "slideUp" | "scale";
+  className?: string;
 }
 
 function PresenceModal({ isOpen, children, variant = "fade", className }: PresenceModalProps) {
@@ -152,7 +152,7 @@ function PresenceModal({ isOpen, children, variant = "fade", className }: Presen
     fade: fadeIn,
     slideUp: slideUp,
     scale: scaleIn,
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -173,15 +173,15 @@ function PresenceModal({ isOpen, children, variant = "fade", className }: Presen
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }
 
 // ── Backdrop ────────────────────────────────────────
 
 interface BackdropProps {
-  isOpen: boolean
-  onClick?: () => void
-  className?: string
+  isOpen: boolean;
+  onClick?: () => void;
+  className?: string;
 }
 
 function Backdrop({ isOpen, onClick, className }: BackdropProps) {
@@ -199,7 +199,7 @@ function Backdrop({ isOpen, onClick, className }: BackdropProps) {
         />
       )}
     </AnimatePresence>
-  )
+  );
 }
 
 // ── PageTransition (Page entry stagger) ─────────────
@@ -219,7 +219,7 @@ function PageTransition({ className, children, ...props }: React.ComponentProps<
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 function PageSection({ className, children, ...props }: React.ComponentProps<typeof motion.div>) {
@@ -233,54 +233,47 @@ function PageSection({ className, children, ...props }: React.ComponentProps<typ
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 // ── NumberCounter (Hero metric counting) ────────────
 
 interface NumberCounterProps {
-  value: number
-  duration?: number
-  className?: string
+  value: number;
+  duration?: number;
+  className?: string;
 }
 
 function NumberCounter({ value, duration: d = 0.6, className }: NumberCounterProps) {
-  const [display, setDisplay] = React.useState(0)
+  const [display, setDisplay] = React.useState(0);
   const prefersReducedMotion = React.useRef(
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  )
+  );
 
   React.useEffect(() => {
     if (prefersReducedMotion.current) {
-      setDisplay(value)
-      return
+      setDisplay(value);
+      return;
     }
 
-    let start = 0
-    const startTime = performance.now()
+    const startTime = performance.now();
 
     function step(currentTime: number) {
-      const elapsed = (currentTime - startTime) / 1000
-      const progress = Math.min(elapsed / d, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
-      setDisplay(Math.round(eased * value))
-      if (progress < 1) requestAnimationFrame(step)
+      const elapsed = (currentTime - startTime) / 1000;
+      const progress = Math.min(elapsed / d, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(step);
     }
 
-    requestAnimationFrame(step)
-  }, [value, d])
+    requestAnimationFrame(step);
+  }, [value, d]);
 
-  return <span data-slot="number-counter" className={className}>{display.toLocaleString()}</span>
+  return (
+    <span data-slot="number-counter" className={className}>
+      {display.toLocaleString()}
+    </span>
+  );
 }
 
-export {
-  FadeIn,
-  FadeUp,
-  Stagger,
-  StaggerItem,
-  PresenceModal,
-  Backdrop,
-  PageTransition,
-  PageSection,
-  NumberCounter,
-}
+export { Backdrop, FadeIn, FadeUp, NumberCounter, PageSection, PageTransition, PresenceModal, Stagger, StaggerItem };

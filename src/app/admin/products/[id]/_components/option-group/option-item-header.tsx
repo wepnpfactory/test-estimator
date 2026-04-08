@@ -15,8 +15,7 @@ export function OptionItemHeader({ group }: Props) {
   const showMultiplier = isSheetQty && !group.allowDirectInput;
   const showRange = isSheetQty && group.allowDirectInput;
   const showDims = group.kind === "DIMENSIONS";
-  const showThickness =
-    group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
+  const showThickness = group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
   const showImage = group.displayType === "SWATCH";
   const showFacets = group.displayType === "CASCADE";
 
@@ -27,20 +26,14 @@ export function OptionItemHeader({ group }: Props) {
 
       {showFacets && (
         <>
-          <div className={`${cellCls} w-24 text-left`}>
-            {group.facetALabel || "1차"}
-          </div>
-          <div className={`${cellCls} w-20 text-left`}>
-            {group.facetBLabel || "2차"}
-          </div>
+          <div className={`${cellCls} w-24 text-left`}>{group.facetALabel || "1차"}</div>
+          <div className={`${cellCls} w-20 text-left`}>{group.facetBLabel || "2차"}</div>
         </>
       )}
 
       <div className={`${cellCls} min-w-0 flex-1 text-left`}>표시명</div>
       <div className={`${cellCls} w-24 text-left`}>value</div>
-      {!showDims && (
-        <div className={`${cellCls} w-32 text-right`}>추가금액</div>
-      )}
+      {!showDims && <div className={`${cellCls} w-32 text-right`}>추가금액</div>}
 
       {showMultiplier && <div className={`${cellCls} w-16 text-right`}>장·부수</div>}
       {showRange && (

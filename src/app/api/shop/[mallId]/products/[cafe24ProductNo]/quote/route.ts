@@ -14,7 +14,7 @@ const Body = z.object({
         directValue: z.number().int().min(0).max(1_000_000).optional(),
         widthMm: z.number().int().min(0).max(10_000).optional(),
         heightMm: z.number().int().min(0).max(10_000).optional(),
-      }),
+      })
     )
     .max(50),
 });
@@ -25,9 +25,7 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(
   req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> },
+  { params }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> }
 ) {
   const origin = req.headers.get("origin");
   const { mallId, cafe24ProductNo } = await params;
@@ -41,11 +39,7 @@ export async function POST(
   try {
     parsed = Body.parse(await req.json());
   } catch (e) {
-    return withCors(
-      { error: "invalid body", detail: e instanceof Error ? e.message : null },
-      origin,
-      { status: 400 },
-    );
+    return withCors({ error: "invalid body", detail: e instanceof Error ? e.message : null }, origin, { status: 400 });
   }
 
   const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
@@ -76,6 +70,6 @@ export async function POST(
       ...quote,
       warning: quote.finalPrice < 0 ? "negative_total" : undefined,
     },
-    origin,
+    origin
   );
 }

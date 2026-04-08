@@ -33,10 +33,7 @@ async function ensureScriptTagInstalled(mall: Cafe24Mall) {
     });
   } catch (e) {
     // 상품 등록 자체는 막지 않는다. 관리자가 /admin/malls 에서 재설치 가능.
-    console.warn(
-      "[products/new] script tag install failed:",
-      e instanceof Error ? e.message : e,
-    );
+    console.warn("[products/new] script tag install failed:", e instanceof Error ? e.message : e);
   }
 }
 
@@ -48,13 +45,7 @@ async function createProduct(formData: FormData) {
   const cafe24ProductNo = Number(formData.get("cafe24ProductNo") || 0);
   const basePrice = Number(formData.get("basePrice") || 0);
 
-  if (
-    !mallId ||
-    !name ||
-    !slug ||
-    !Number.isInteger(cafe24ProductNo) ||
-    cafe24ProductNo <= 0
-  ) {
+  if (!mallId || !name || !slug || !Number.isInteger(cafe24ProductNo) || cafe24ProductNo <= 0) {
     throw new Error("필수 입력값이 누락되었습니다.");
   }
 

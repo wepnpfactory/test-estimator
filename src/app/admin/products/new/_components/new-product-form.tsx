@@ -31,16 +31,10 @@ export function NewProductForm({ malls, action }: Props) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [basePrice, setBasePrice] = useState(0);
-  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">(
-    "FLAT_PRINT",
-  );
+  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">("FLAT_PRINT");
   const [submitting, setSubmitting] = useState(false);
 
-  function handlePick(p: {
-    productNo: number;
-    productName: string;
-    price: string;
-  }) {
+  function handlePick(p: { productNo: number; productName: string; price: string }) {
     setPicked(p);
     if (!name) setName(p.productName);
     if (!slug) setSlug(slugify(p.productName).slice(0, 80));
@@ -94,11 +88,7 @@ export function NewProductForm({ malls, action }: Props) {
         hint="이미 쇼핑몰에 등록된 상품 중에서 견적 엔진을 붙일 상품을 선택합니다."
       >
         {mallId ? (
-          <Cafe24ProductPicker
-            mallDbId={mallId}
-            onSelect={handlePick}
-            selectedProductNo={picked?.productNo ?? null}
-          />
+          <Cafe24ProductPicker mallDbId={mallId} onSelect={handlePick} selectedProductNo={picked?.productNo ?? null} />
         ) : (
           <div className="text-xs text-zinc-500">먼저 몰을 선택하세요.</div>
         )}
@@ -131,12 +121,7 @@ export function NewProductForm({ malls, action }: Props) {
               >
                 <div className="text-xs font-semibold">{t.title}</div>
                 <div
-                  className={
-                    "mt-0.5 text-[10px] " +
-                    (active
-                      ? "text-zinc-300 dark:text-zinc-600"
-                      : "text-zinc-500")
-                  }
+                  className={"mt-0.5 text-[10px] " + (active ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-500")}
                 >
                   {t.desc}
                 </div>
@@ -148,13 +133,7 @@ export function NewProductForm({ malls, action }: Props) {
 
       <Section title="④ 견적 엔진 설정">
         <Field label="상품명 (관리용)">
-          <input
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className={inputCls}
-          />
+          <input name="name" value={name} onChange={(e) => setName(e.target.value)} required className={inputCls} />
         </Field>
         <Field label="slug (URL용)">
           <input
@@ -192,15 +171,7 @@ export function NewProductForm({ malls, action }: Props) {
 const inputCls =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div>
@@ -212,18 +183,10 @@ function Section({
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-zinc-600 dark:text-zinc-400">
-        {label}
-      </span>
+      <span className="mb-1 block text-xs text-zinc-600 dark:text-zinc-400">{label}</span>
       {children}
     </label>
   );

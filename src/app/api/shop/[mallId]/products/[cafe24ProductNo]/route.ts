@@ -10,9 +10,7 @@ export async function OPTIONS(req: NextRequest) {
 // GET — (mallId, cafe24ProductNo) 로 식별된 facade 상품의 옵션 스키마 반환
 export async function GET(
   req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> },
+  { params }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> }
 ) {
   const origin = req.headers.get("origin");
   const { mallId, cafe24ProductNo } = await params;
@@ -95,6 +93,6 @@ export async function GET(
         })),
       })),
     },
-    origin,
+    origin
   );
 }

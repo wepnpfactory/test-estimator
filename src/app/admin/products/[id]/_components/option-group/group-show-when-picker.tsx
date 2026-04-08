@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ConditionPicker,
-  parseConditions,
-  type Condition,
-} from "./condition-picker";
+import { ConditionPicker, parseConditions, type Condition } from "./condition-picker";
 import type { OptionGroupWithItems } from "./types";
 
 interface Props {
@@ -22,13 +18,8 @@ interface Props {
  *   업데이트하고, 실제 저장은 부모 form 의 "설정 저장" 버튼이 담당한다.
  * - 이렇게 하면 group 의 다른 필드(kind/required/...)를 덮어쓸 위험이 없다.
  */
-export function GroupShowWhenPicker({
-  currentShowWhen,
-  precedingGroups,
-}: Props) {
-  const [conditions, setConditions] = useState<Condition[]>(() =>
-    parseConditions(currentShowWhen),
-  );
+export function GroupShowWhenPicker({ currentShowWhen, precedingGroups }: Props) {
+  const [conditions, setConditions] = useState<Condition[]>(() => parseConditions(currentShowWhen));
   const serialized = conditions.length > 0 ? JSON.stringify(conditions) : "";
 
   return (
@@ -40,9 +31,7 @@ export function GroupShowWhenPicker({
         precedingGroups={precedingGroups}
         onChange={setConditions}
       />
-      <span className="text-[11px] text-text-tertiary">
-        저장 버튼을 눌러야 반영됩니다
-      </span>
+      <span className="text-[11px] text-text-tertiary">저장 버튼을 눌러야 반영됩니다</span>
     </div>
   );
 }

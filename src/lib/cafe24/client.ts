@@ -18,10 +18,7 @@ const refreshInFlight = new Map<string, Promise<Cafe24Mall>>();
 
 function tokenIsFresh(mall: Cafe24Mall): boolean {
   if (!mall.accessToken || !mall.tokenExpiresAt) return false;
-  return (
-    new Date(mall.tokenExpiresAt).getTime() - Date.now() >
-    TOKEN_REFRESH_MARGIN_MS
-  );
+  return new Date(mall.tokenExpiresAt).getTime() - Date.now() > TOKEN_REFRESH_MARGIN_MS;
 }
 
 async function refreshOnce(mall: Cafe24Mall): Promise<Cafe24Mall> {
@@ -92,7 +89,7 @@ export interface Cafe24FetchOptions extends Omit<RequestInit, "body"> {
 export async function cafe24Fetch<T = unknown>(
   mallInput: Cafe24Mall | string,
   path: string,
-  options: Cafe24FetchOptions = {},
+  options: Cafe24FetchOptions = {}
 ): Promise<T> {
   let mall: Cafe24Mall;
   if (typeof mallInput === "string") {
@@ -120,8 +117,7 @@ export async function cafe24Fetch<T = unknown>(
     return fetch(url, {
       ...options,
       headers,
-      body:
-        options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       cache: "no-store",
     });
   };
@@ -135,7 +131,7 @@ export async function cafe24Fetch<T = unknown>(
       res = await doFetch(mall.accessToken!);
     } catch (refreshErr) {
       throw new Error(
-        `Cafe24 401 + refresh failed: ${refreshErr instanceof Error ? refreshErr.message : String(refreshErr)}`,
+        `Cafe24 401 + refresh failed: ${refreshErr instanceof Error ? refreshErr.message : String(refreshErr)}`
       );
     }
   }

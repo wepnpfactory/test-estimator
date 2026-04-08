@@ -10,10 +10,7 @@
 // - selling: T 가 없으면 basket 진입 자체가 거부됨
 
 import { cafe24Fetch } from "@/lib/cafe24/client";
-import {
-  attachAdditionalOptions,
-  type AdditionalOptionField,
-} from "@/lib/cafe24/additional-options";
+import { attachAdditionalOptions, type AdditionalOptionField } from "@/lib/cafe24/additional-options";
 import type { Cafe24Mall } from "@/generated/prisma/client";
 
 export interface CreateDynamicProductInput {
@@ -43,9 +40,7 @@ export interface CreateDynamicProductResult {
   productCode: string;
 }
 
-export async function createDynamicProduct(
-  input: CreateDynamicProductInput,
-): Promise<CreateDynamicProductResult> {
+export async function createDynamicProduct(input: CreateDynamicProductInput): Promise<CreateDynamicProductResult> {
   if (!Number.isFinite(input.price) || input.price < 0) {
     throw new Error(`invalid price: ${input.price}`);
   }
@@ -79,9 +74,7 @@ export async function createDynamicProduct(
 
   if (input.customCode) request.custom_product_code = input.customCode;
   if (typeof input.categoryNo === "number" && input.categoryNo > 0) {
-    request.add_category_no = [
-      { category_no: input.categoryNo, recommend: "F", new: "F" },
-    ];
+    request.add_category_no = [{ category_no: input.categoryNo, recommend: "F", new: "F" }];
   }
 
   const body = {
@@ -107,10 +100,7 @@ export async function createDynamicProduct(
  * - 체크아웃 도중 보상 트랜잭션 (Cafe24엔 등록됐는데 DB 갱신 실패한 경우)
  * - 만료된 미결제 동적 상품 정리 배치
  */
-export async function deleteDynamicProduct(
-  mall: Cafe24Mall,
-  productNo: number,
-): Promise<void> {
+export async function deleteDynamicProduct(mall: Cafe24Mall, productNo: number): Promise<void> {
   await cafe24Fetch(mall, `/api/v2/admin/products/${productNo}`, {
     method: "DELETE",
   });
@@ -120,10 +110,7 @@ export async function deleteDynamicProduct(
  * 주문이 완료된 동적 상품을 비활성화한다.
  * 삭제하면 주문서에서 상품 정보 조회가 불가능해지므로, 판매·진열만 끈다.
  */
-export async function deactivateDynamicProduct(
-  mall: Cafe24Mall,
-  productNo: number,
-): Promise<void> {
+export async function deactivateDynamicProduct(mall: Cafe24Mall, productNo: number): Promise<void> {
   await cafe24Fetch(mall, `/api/v2/admin/products/${productNo}`, {
     method: "PUT",
     body: {
@@ -180,11 +167,7 @@ export async function attachDynamicProductAdditionalOptions(params: {
  *                        커스텀 도메인 사용 몰의 세션 분리 문제를 피하려면 반드시
  *                        실제 사용 중인 origin을 넣을 것.
  */
-export function buildAddToCartUrl(params: {
-  storefrontOrigin: string;
-  productNo: number;
-  quantity?: number;
-}): string {
+export function buildAddToCartUrl(params: { storefrontOrigin: string; productNo: number; quantity?: number }): string {
   const { storefrontOrigin, productNo, quantity = 1 } = params;
   const u = new URL("/order/basket.html", storefrontOrigin);
   u.searchParams.set("product_no", String(productNo));
@@ -215,9 +198,6 @@ export function buildAddToCartFormHtml(params: {
 
 function escapeAttr(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
-    return (
-      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ||
-      c
-    );
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c;
   });
 }

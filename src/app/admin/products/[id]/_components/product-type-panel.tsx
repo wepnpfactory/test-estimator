@@ -38,9 +38,7 @@ const FLAT_PRESETS: Preset[] = [
 ];
 
 const ALL_PRESETS: Preset[] = Array.from(
-  new Map(
-    [...BOOKLET_PRESETS, ...FLAT_PRESETS].map((p) => [p.label, p]),
-  ).values(),
+  new Map([...BOOKLET_PRESETS, ...FLAT_PRESETS].map((p) => [p.label, p])).values()
 );
 
 const OPTIONS: { v: Template; label: string }[] = [
@@ -74,12 +72,8 @@ export function ProductTypePanel({
 }: Props) {
   const [template, setTemplate] = useState<Template>(initialTemplate);
   const initMatch = ALL_PRESETS.find((p) => p.w * p.h === baseAreaMm2);
-  const [w, setW] = useState<number>(
-    initMatch ? initMatch.w : Math.round(Math.sqrt(baseAreaMm2)),
-  );
-  const [h, setH] = useState<number>(
-    initMatch ? initMatch.h : Math.round(Math.sqrt(baseAreaMm2)),
-  );
+  const [w, setW] = useState<number>(initMatch ? initMatch.w : Math.round(Math.sqrt(baseAreaMm2)));
+  const [h, setH] = useState<number>(initMatch ? initMatch.h : Math.round(Math.sqrt(baseAreaMm2)));
   const [bleed, setBleed] = useState<number>(bleedMm);
   const [lead, setLead] = useState<number>(leadTimeDays);
   const [pending, startTransition] = useTransition();
@@ -122,11 +116,7 @@ export function ProductTypePanel({
 
   function doReset() {
     if (template === "NONE") return;
-    if (
-      !window.confirm(
-        "현재 옵션 그룹을 모두 삭제하고 선택한 종류의 기본 옵션으로 초기화합니다. 계속하시겠어요?",
-      )
-    )
+    if (!window.confirm("현재 옵션 그룹을 모두 삭제하고 선택한 종류의 기본 옵션으로 초기화합니다. 계속하시겠어요?"))
       return;
     startResetTransition(async () => {
       try {
@@ -142,8 +132,7 @@ export function ProductTypePanel({
   }
 
   const templateDirty = template !== initialTemplate;
-  const metaDirty =
-    area !== baseAreaMm2 || bleed !== bleedMm || lead !== leadTimeDays;
+  const metaDirty = area !== baseAreaMm2 || bleed !== bleedMm || lead !== leadTimeDays;
   const dirty = templateDirty || metaDirty;
 
   return (
@@ -161,9 +150,7 @@ export function ProductTypePanel({
                 onClick={() => setTemplate(t.v)}
                 className={
                   "inline-flex h-full min-w-16 items-center justify-center px-3 text-xs font-medium transition-colors " +
-                  (active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-text-secondary hover:bg-surface-subtle")
+                  (active ? "bg-primary text-primary-foreground" : "text-text-secondary hover:bg-surface-subtle")
                 }
               >
                 {t.label}
@@ -187,11 +174,7 @@ export function ProductTypePanel({
       {/* 기준 사이즈 + 도련 + 제작기간 */}
       <div className="flex flex-wrap items-center gap-2">
         <span className={labelCaptionCls}>기준 사이즈</span>
-        <select
-          onChange={(e) => applyPreset(e.target.value)}
-          defaultValue=""
-          className={inputCls + " w-44"}
-        >
+        <select onChange={(e) => applyPreset(e.target.value)} defaultValue="" className={inputCls + " w-44"}>
           <option value="">프리셋 선택</option>
           {(template === "BOOKLET" || template === "NONE") && (
             <optgroup label="📖 책자">
@@ -226,9 +209,7 @@ export function ProductTypePanel({
           className={inputCls + " w-16 text-right"}
         />
         <span className="text-xs text-text-secondary">mm</span>
-        <span className="font-mono text-xs text-text-secondary">
-          = {area.toLocaleString()}mm²
-        </span>
+        <span className="font-mono text-xs text-text-secondary">= {area.toLocaleString()}mm²</span>
         <span className="text-xs text-text-disabled">·</span>
         <label className="flex items-center gap-1.5 text-xs text-text-secondary">
           도련
@@ -252,12 +233,7 @@ export function ProductTypePanel({
           />
           영업일
         </label>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!dirty || pending}
-          className={buttonCls}
-        >
+        <button type="button" onClick={save} disabled={!dirty || pending} className={buttonCls}>
           {pending ? "저장 중…" : "저장"}
         </button>
       </div>

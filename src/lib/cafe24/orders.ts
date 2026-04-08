@@ -53,9 +53,7 @@ interface Cafe24Order {
   }>;
 }
 
-export async function syncOrders(
-  params: SyncOrdersParams,
-): Promise<SyncOrdersResult> {
+export async function syncOrders(params: SyncOrdersParams): Promise<SyncOrdersResult> {
   const { mall, startDate, endDate, limit = 100 } = params;
   const start = formatKstDate(startDate);
   const end = formatKstDate(endDate);
@@ -69,24 +67,18 @@ export async function syncOrders(
   while (offset < HARD_LIMIT) {
     let page: { orders?: Cafe24Order[] } = {};
     try {
-      page = await cafe24Fetch<{ orders?: Cafe24Order[] }>(
-        mall,
-        "/api/v2/admin/orders",
-        {
-          method: "GET",
-          query: {
-            start_date: start,
-            end_date: end,
-            limit,
-            offset,
-            embed: "items,buyer",
-          },
+      page = await cafe24Fetch<{ orders?: Cafe24Order[] }>(mall, "/api/v2/admin/orders", {
+        method: "GET",
+        query: {
+          start_date: start,
+          end_date: end,
+          limit,
+          offset,
+          embed: "items,buyer",
         },
-      );
+      });
     } catch (e) {
-      errors.push(
-        `fetch failed at offset=${offset}: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      errors.push(`fetch failed at offset=${offset}: ${e instanceof Error ? e.message : String(e)}`);
       break;
     }
     const fetched = page.orders ?? [];
@@ -113,11 +105,7 @@ export async function syncOrders(
       if (!dyn) continue;
 
       // 이미 처리됨
-      if (
-        dyn.status === "ORDERED" ||
-        dyn.status === "DEACTIVATED" ||
-        dyn.cafe24OrderId === order.order_id
-      ) {
+      if (dyn.status === "ORDERED" || dyn.status === "DEACTIVATED" || dyn.cafe24OrderId === order.order_id) {
         continue;
       }
 
@@ -140,9 +128,7 @@ export async function syncOrders(
         });
         newlyOrdered++;
       } catch (e) {
-        errors.push(
-          `db update failed for ${dyn.id}: ${e instanceof Error ? e.message : String(e)}`,
-        );
+        errors.push(`db update failed for ${dyn.id}: ${e instanceof Error ? e.message : String(e)}`);
         continue;
       }
 
@@ -157,7 +143,7 @@ export async function syncOrders(
           deactivated++;
         } catch (e) {
           errors.push(
-            `deactivate failed for product_no=${dyn.cafe24ProductNo}: ${e instanceof Error ? e.message : String(e)}`,
+            `deactivate failed for product_no=${dyn.cafe24ProductNo}: ${e instanceof Error ? e.message : String(e)}`
           );
         }
       }

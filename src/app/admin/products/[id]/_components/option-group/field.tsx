@@ -1,22 +1,12 @@
 import type { ReactNode } from "react";
 import { labelCaptionCls } from "../form-styles";
 
-export function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className={labelCaptionCls}>{label}</span>
       {children}
-      {hint && (
-        <span className="text-[11px] text-text-tertiary">{hint}</span>
-      )}
+      {hint && <span className="text-[11px] text-text-tertiary">{hint}</span>}
     </div>
   );
 }
@@ -33,11 +23,5 @@ export function KindBadge({ kind }: { kind: string }) {
   if (kind === "NORMAL") return null;
   const m = KIND_BADGE_MAP[kind];
   if (!m) return null;
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.cls}`}
-    >
-      {m.label}
-    </span>
-  );
+  return <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.cls}`}>{m.label}</span>;
 }

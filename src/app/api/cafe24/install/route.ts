@@ -16,10 +16,7 @@ export async function GET(req: NextRequest) {
   const clientId = process.env.CAFE24_CLIENT_ID;
   const redirectUri = process.env.CAFE24_REDIRECT_URI;
   if (!clientId || !redirectUri) {
-    return NextResponse.json(
-      { error: "Cafe24 app is not configured on the server" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Cafe24 app is not configured on the server" }, { status: 500 });
   }
 
   const state = crypto.randomBytes(16).toString("hex");

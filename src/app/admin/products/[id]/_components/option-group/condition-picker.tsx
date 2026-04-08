@@ -2,12 +2,7 @@
 
 import { Plus, X } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import {
-  buttonCls,
-  buttonGhostCls,
-  inputCls,
-  labelCaptionCls,
-} from "../form-styles";
+import { buttonCls, buttonGhostCls, inputCls, labelCaptionCls } from "../form-styles";
 import type { OptionGroupWithItems } from "./types";
 
 export interface Condition {
@@ -38,13 +33,7 @@ interface Props {
  * - 모달 안에서 선행 그룹 → 아이템 순으로 골라 추가
  * - 추가/삭제 즉시 onChange 호출 (auto-save)
  */
-export function ConditionPicker({
-  title,
-  value,
-  precedingGroups,
-  onChange,
-  pending = false,
-}: Props) {
+export function ConditionPicker({ title, value, precedingGroups, onChange, pending = false }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [draftGroupId, setDraftGroupId] = useState<string>("");
   const [draftItemId, setDraftItemId] = useState<string>("");
@@ -68,9 +57,7 @@ export function ConditionPicker({
   function add() {
     if (!draftGroupId || !draftItemId) return;
     // 중복 방지
-    const exists = value.some(
-      (c) => c.groupId === draftGroupId && c.itemId === draftItemId,
-    );
+    const exists = value.some((c) => c.groupId === draftGroupId && c.itemId === draftItemId);
     if (exists) return;
     onChange([...value, { groupId: draftGroupId, itemId: draftItemId }]);
     setDraftItemId("");
@@ -111,7 +98,7 @@ export function ConditionPicker({
         ref={dialogRef}
         className="fixed inset-0 m-auto rounded-xl border border-border bg-card p-0 text-foreground shadow-(--shadow-modal) backdrop:bg-black/30"
       >
-        <div className="flex w-[420px] max-w-[90vw] flex-col gap-4 p-5">
+        <div className="flex w-105 max-w-[90vw] flex-col gap-4 p-5">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             <button
@@ -138,9 +125,7 @@ export function ConditionPicker({
                     key={`${c.groupId}:${c.itemId}:${i}`}
                     className="flex items-center justify-between gap-2 bg-surface-subtle px-3 py-2 text-xs"
                   >
-                    <span className="min-w-0 truncate text-foreground">
-                      {labelOf(c)}
-                    </span>
+                    <span className="min-w-0 truncate text-foreground">{labelOf(c)}</span>
                     <button
                       type="button"
                       onClick={() => remove(i)}
@@ -159,11 +144,7 @@ export function ConditionPicker({
           <div className="space-y-1.5">
             <span className={labelCaptionCls}>조건 추가</span>
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-              <select
-                value={draftGroupId}
-                onChange={(e) => setDraftGroupId(e.target.value)}
-                className={inputCls}
-              >
+              <select value={draftGroupId} onChange={(e) => setDraftGroupId(e.target.value)} className={inputCls}>
                 <option value="">선행 옵션…</option>
                 {precedingGroups.map((g) => (
                   <option key={g.id} value={g.id}>
@@ -195,8 +176,7 @@ export function ConditionPicker({
             </div>
             {precedingGroups.length === 0 && (
               <p className="text-[11px] text-text-tertiary">
-                선행 옵션 그룹이 없습니다. 그룹 순서를 위로 옮기거나 다른
-                그룹을 먼저 만드세요.
+                선행 옵션 그룹이 없습니다. 그룹 순서를 위로 옮기거나 다른 그룹을 먼저 만드세요.
               </p>
             )}
           </div>
@@ -223,7 +203,7 @@ export function parseConditions(raw: unknown): Condition[] {
         !!x &&
         typeof x === "object" &&
         typeof (x as Condition).groupId === "string" &&
-        typeof (x as Condition).itemId === "string",
+        typeof (x as Condition).itemId === "string"
     )
     .map((x) => ({ groupId: x.groupId, itemId: x.itemId }));
 }
@@ -232,10 +212,7 @@ export function parseConditions(raw: unknown): Condition[] {
  * Picker + 서버 액션을 묶어 주는 헬퍼.
  * patch(name, value) 형태의 콜백을 받아 자동 저장한다.
  */
-export function useConditionPatch(
-  name: string,
-  patch: (name: string, value: string) => void,
-) {
+export function useConditionPatch(name: string, patch: (name: string, value: string) => void) {
   const [pending, startTransition] = useTransition();
   const apply = (next: Condition[]) => {
     startTransition(() => {

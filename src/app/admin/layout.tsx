@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <aside className="flex w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex h-14 items-center gap-2 border-b border-zinc-200 px-5 dark:border-zinc-800">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-zinc-900 to-zinc-600 text-[10px] font-bold text-white dark:from-white dark:to-zinc-400 dark:text-zinc-900">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-linear-to-br from-zinc-900 to-zinc-600 text-[10px] font-bold text-white dark:from-white dark:to-zinc-400 dark:text-zinc-900">
             TE
           </div>
           <div className="text-sm font-semibold tracking-tight">test-estimator</div>
@@ -28,9 +28,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
       <div className="flex flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white/80 px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            관리자
-          </div>
+          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">관리자</div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
             A
           </div>

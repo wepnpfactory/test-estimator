@@ -37,9 +37,7 @@ export function parseBulkOptions(text: string): {
       return;
     }
     if (!/^[a-z0-9_-]+$/i.test(value)) {
-      errors.push(
-        `블록 ${idx + 1} (${label}): value 는 영숫자/하이픈/언더스코어만 가능 (${value})`,
-      );
+      errors.push(`블록 ${idx + 1} (${label}): value 는 영숫자/하이픈/언더스코어만 가능 (${value})`);
       return;
     }
     items.push({ label, value, addPrice });
@@ -50,11 +48,7 @@ export function parseBulkOptions(text: string): {
 interface Props {
   groupId: string;
   productId: string;
-  bulkAction: (
-    groupId: string,
-    productId: string,
-    items: ParsedItem[],
-  ) => Promise<void>;
+  bulkAction: (groupId: string, productId: string, items: ParsedItem[]) => Promise<void>;
 }
 
 export function OptionBulkPaste({ groupId, productId, bulkAction }: Props) {
@@ -92,9 +86,7 @@ export function OptionBulkPaste({ groupId, productId, bulkAction }: Props) {
   return (
     <div className="mt-2 space-y-2 rounded-md border border-border bg-surface-subtle p-3">
       <div className="flex items-center justify-between text-[11px] text-text-secondary">
-        <span>
-          블록당 3줄 (label / value / addPrice). 빈 줄로 블록 구분.
-        </span>
+        <span>블록당 3줄 (label / value / addPrice). 빈 줄로 블록 구분.</span>
         <button
           type="button"
           onClick={() => {
@@ -112,21 +104,14 @@ export function OptionBulkPaste({ groupId, productId, bulkAction }: Props) {
         rows={8}
         spellCheck={false}
         placeholder={`A4 (210×297)\na4\n0\n\nB5 (182×257)\nb5\n-2000`}
-        className="block w-full rounded-md border border-border bg-card p-2 font-mono text-[12px] leading-snug text-foreground"
+        className="block w-full rounded-md border border-border bg-card p-2 font-mono text-xs leading-snug text-foreground"
       />
       <div className="flex items-center justify-between text-[11px]">
         <div className="text-text-secondary">
           파싱: <strong className="text-foreground">{items.length}건</strong>
-          {errors.length > 0 && (
-            <span className="ml-2 text-destructive">에러 {errors.length}</span>
-          )}
+          {errors.length > 0 && <span className="ml-2 text-destructive">에러 {errors.length}</span>}
         </div>
-        <button
-          type="button"
-          disabled={items.length === 0 || pending}
-          onClick={submit}
-          className={buttonCls}
-        >
+        <button type="button" disabled={items.length === 0 || pending} onClick={submit} className={buttonCls}>
           {pending ? "추가 중…" : `${items.length}건 일괄 추가`}
         </button>
       </div>

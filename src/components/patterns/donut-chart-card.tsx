@@ -1,30 +1,30 @@
-import * as React from "react"
-import { cn } from "../ui/utils"
+import * as React from "react";
+import { cn } from "../ui/utils";
 
 interface DonutItem {
-  name: string
-  value: number
-  stock?: string | number
-  unit?: string
+  name: string;
+  value: number;
+  stock?: string | number;
+  unit?: string;
 }
 
 interface BottomStat {
-  label: string
-  value: string | number
-  subLabel?: string
+  label: string;
+  value: string | number;
+  subLabel?: string;
 }
 
 interface DonutChartCardProps extends React.ComponentProps<"div"> {
-  title: string
-  centerValue?: string | number
-  centerUnit?: string
-  centerLabel?: string
-  items: DonutItem[]
-  selectedItem?: string | null
-  onItemSelect?: (name: string | null) => void
-  bottomStats?: BottomStat[]
-  bottomColumns?: number
-  chartElement: React.ReactNode
+  title: string;
+  centerValue?: string | number;
+  centerUnit?: string;
+  centerLabel?: string;
+  items: DonutItem[];
+  selectedItem?: string | null;
+  onItemSelect?: (name: string | null) => void;
+  bottomStats?: BottomStat[];
+  bottomColumns?: number;
+  chartElement: React.ReactNode;
 }
 
 function DonutChartCard({
@@ -41,23 +41,18 @@ function DonutChartCard({
   className,
   ...props
 }: DonutChartCardProps) {
-  const grayColors = ["#D4D4D4", "#A8A8A8", "#8B8B8B", "#6B6B6B"]
+  const grayColors = ["#D4D4D4", "#A8A8A8", "#8B8B8B", "#6B6B6B"];
 
   return (
     <div
       data-slot="donut-chart-card"
-      className={cn(
-        "mx-6 bg-card rounded-2xl p-6 shadow-[var(--shadow-card)]",
-        className,
-      )}
+      className={cn("mx-6 bg-card rounded-2xl p-6 shadow-(--shadow-card)", className)}
       {...props}
     >
-      <h3 className="text-text-primary font-bold text-[18px] leading-snug mb-4">
-        {title}
-      </h3>
+      <h3 className="text-text-primary font-bold text-[18px] leading-snug mb-4">{title}</h3>
 
       <div className="flex items-center gap-8">
-        <div className="relative size-32 flex-shrink-0">
+        <div className="relative size-32 shrink-0">
           {chartElement}
           {(centerValue !== undefined || centerLabel) && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -69,9 +64,7 @@ function DonutChartCard({
                   </p>
                 )}
                 {centerLabel && (
-                  <p className="text-text-tertiary text-[10px] mt-1 font-medium uppercase">
-                    {centerLabel}
-                  </p>
+                  <p className="text-text-tertiary text-[10px] mt-1 font-medium uppercase">{centerLabel}</p>
                 )}
               </div>
             </div>
@@ -92,7 +85,8 @@ function DonutChartCard({
                 <div
                   className="size-3 rounded-full transition-all duration-300"
                   style={{
-                    backgroundColor: selectedItem === item.name ? "var(--brand)" : grayColors[index % grayColors.length],
+                    backgroundColor:
+                      selectedItem === item.name ? "var(--brand)" : grayColors[index % grayColors.length],
                     boxShadow: selectedItem === item.name ? "0 0 0 2px #721FE540" : "none",
                   }}
                 />
@@ -119,22 +113,16 @@ function DonutChartCard({
         >
           {bottomStats.map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-[11px] text-text-secondary mb-1.5 font-medium uppercase">
-                {stat.label}
-              </p>
-              <p className="text-text-primary font-bold text-[20px] leading-none">
-                {stat.value}
-              </p>
-              {stat.subLabel && (
-                <p className="text-[11px] text-text-secondary mt-0.5">{stat.subLabel}</p>
-              )}
+              <p className="text-[11px] text-text-secondary mb-1.5 font-medium uppercase">{stat.label}</p>
+              <p className="text-text-primary font-bold text-[20px] leading-none">{stat.value}</p>
+              {stat.subLabel && <p className="text-[11px] text-text-secondary mt-0.5">{stat.subLabel}</p>}
             </div>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export { DonutChartCard }
-export type { DonutChartCardProps, DonutItem, BottomStat }
+export { DonutChartCard };
+export type { BottomStat, DonutChartCardProps, DonutItem };

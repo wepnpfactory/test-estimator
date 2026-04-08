@@ -11,8 +11,6 @@ interface Props {
   hasGroups: boolean;
   action: (productId: string, formData: FormData) => Promise<void>;
   resetAction?: (productId: string) => Promise<void>;
-  /** 라디오 클릭 시 (저장 전) 상위 컴포넌트에 로컬 변경 알림 */
-  onLocalChange?: (v: Template) => void;
 }
 
 const OPTIONS: { v: Template; label: string }[] = [
@@ -21,25 +19,14 @@ const OPTIONS: { v: Template; label: string }[] = [
   { v: "NONE", label: "빈 상품" },
 ];
 
-export function TemplatePicker({
-  productId,
-  current,
-  hasGroups,
-  action,
-  resetAction,
-  onLocalChange,
-}: Props) {
+export function TemplatePicker({ productId, current, hasGroups, action, resetAction }: Props) {
   const [value, setValue] = useState<Template>(current);
   const [pending, startTransition] = useTransition();
   const [resetPending, startResetTransition] = useTransition();
 
   function resetFromTemplate() {
     if (!resetAction || current === "NONE") return;
-    if (
-      !window.confirm(
-        "현재 옵션 그룹을 모두 삭제하고 선택한 종류의 기본 옵션으로 초기화합니다. 계속하시겠어요?",
-      )
-    )
+    if (!window.confirm("현재 옵션 그룹을 모두 삭제하고 선택한 종류의 기본 옵션으로 초기화합니다. 계속하시겠어요?"))
       return;
     startResetTransition(async () => {
       try {
@@ -85,9 +72,7 @@ export function TemplatePicker({
               onClick={() => setValue(t.v)}
               className={
                 "inline-flex h-full min-w-16 items-center justify-center px-3 text-xs font-medium transition-colors " +
-                (active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-text-secondary hover:bg-surface-subtle")
+                (active ? "bg-primary text-primary-foreground" : "text-text-secondary hover:bg-surface-subtle")
               }
             >
               {t.label}
@@ -95,12 +80,7 @@ export function TemplatePicker({
           );
         })}
       </div>
-      <button
-        type="button"
-        onClick={submit}
-        disabled={!dirty || pending}
-        className={buttonCls}
-      >
+      <button type="button" onClick={submit} disabled={!dirty || pending} className={buttonCls}>
         {pending ? "저장 중…" : "저장"}
       </button>
       {resetAction && current !== "NONE" && hasGroups && (
@@ -115,9 +95,7 @@ export function TemplatePicker({
         </button>
       )}
       {!hasGroups && value !== "NONE" && dirty && (
-        <span className="text-[11px] text-text-tertiary">
-          저장하면 선택한 종류의 옵션 그룹이 자동 생성됩니다
-        </span>
+        <span className="text-[11px] text-text-tertiary">저장하면 선택한 종류의 옵션 그룹이 자동 생성됩니다</span>
       )}
     </div>
   );

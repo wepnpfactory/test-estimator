@@ -15,20 +15,14 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   if (!code || !state) {
-    return NextResponse.json(
-      { error: "code, state are required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "code, state are required" }, { status: 400 });
   }
 
   // Cafe24 콜백은 mall_id 를 query 로 안 보내는 케이스가 있어
   // install 시 셋팅한 cafe24_oauth_state_<mallId> 쿠키들 중 state 가 일치하는 것을 찾는다.
   const STATE_COOKIE_PREFIX = "cafe24_oauth_state_";
   const allCookies = req.cookies.getAll();
-  const matched = allCookies.find(
-    (c) =>
-      c.name.startsWith(STATE_COOKIE_PREFIX) && timingSafeEqualStr(c.value, state),
-  );
+  const matched = allCookies.find((c) => c.name.startsWith(STATE_COOKIE_PREFIX) && timingSafeEqualStr(c.value, state));
   if (!matched) {
     return NextResponse.json({ error: "state mismatch" }, { status: 400 });
   }
@@ -42,10 +36,7 @@ export async function GET(req: NextRequest) {
   const clientSecret = process.env.CAFE24_CLIENT_SECRET;
   const redirectUri = process.env.CAFE24_REDIRECT_URI;
   if (!clientId || !clientSecret || !redirectUri) {
-    return NextResponse.json(
-      { error: "Cafe24 app is not configured on the server" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Cafe24 app is not configured on the server" }, { status: 500 });
   }
 
   try {
@@ -105,9 +96,6 @@ export async function GET(req: NextRequest) {
     res.cookies.delete(cookieName);
     return res;
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "token exchange failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: err instanceof Error ? err.message : "token exchange failed" }, { status: 500 });
   }
 }

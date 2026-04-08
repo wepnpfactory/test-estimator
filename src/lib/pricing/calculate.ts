@@ -24,11 +24,7 @@
 //     if group.perArea:     c *= areaRatio
 //     total += c
 
-import type {
-  Product,
-  OptionGroup,
-  OptionItem,
-} from "@/generated/prisma/client";
+import type { Product, OptionGroup, OptionItem } from "@/generated/prisma/client";
 
 export type ProductWithOptions = Product & {
   optionGroups: (OptionGroup & { items: OptionItem[] })[];
@@ -94,48 +90,26 @@ function parseShowWhen(value: unknown): ShowWhenCondition[] {
   return out;
 }
 
-function isVisible(
-  showWhen: unknown,
-  selections: SelectedOption[],
-): boolean {
+function isVisible(showWhen: unknown, selections: SelectedOption[]): boolean {
   const conditions = parseShowWhen(showWhen);
   if (conditions.length === 0) return true;
-  return conditions.every((c) =>
-    selections.some(
-      (sel) => sel.groupId === c.groupId && sel.itemId === c.itemId,
-    ),
-  );
+  return conditions.every((c) => selections.some((sel) => sel.groupId === c.groupId && sel.itemId === c.itemId));
 }
 
-export function isGroupVisible(
-  group: OptionGroup,
-  selections: SelectedOption[],
-): boolean {
+export function isGroupVisible(group: OptionGroup, selections: SelectedOption[]): boolean {
   return isVisible(group.showWhen, selections);
 }
 
 /** 아이템 disabledWhen 평가 — 조건 만족 시 disabled(선택 불가) */
-export function isItemDisabled(
-  item: OptionItem,
-  selections: SelectedOption[],
-): boolean {
+export function isItemDisabled(item: OptionItem, selections: SelectedOption[]): boolean {
   const conditions = parseShowWhen(item.disabledWhen);
   if (conditions.length === 0) return false;
-  return conditions.every((c) =>
-    selections.some(
-      (sel) => sel.groupId === c.groupId && sel.itemId === c.itemId,
-    ),
-  );
+  return conditions.every((c) => selections.some((sel) => sel.groupId === c.groupId && sel.itemId === c.itemId));
 }
 
 /** SHEET_COUNT/QUANTITY 직접 입력 값에 매칭되는 첫 옵션 */
-function findRangeItem(
-  items: OptionItem[],
-  value: number,
-): OptionItem | null {
-  const sorted = [...items]
-    .filter((i) => i.enabled)
-    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+function findRangeItem(items: OptionItem[], value: number): OptionItem | null {
+  const sorted = [...items].filter((i) => i.enabled).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   for (const it of sorted) {
     const min = it.minRange ?? -Infinity;
     const max = it.maxRange ?? Infinity;
@@ -145,11 +119,7 @@ function findRangeItem(
 }
 
 /** DIMENSIONS W/H 입력에 fit 되는 가장 작은 옵션 */
-function findFitDimensionItem(
-  items: OptionItem[],
-  w: number,
-  h: number,
-): OptionItem | null {
+function findFitDimensionItem(items: OptionItem[], w: number, h: number): OptionItem | null {
   const candidates = items
     .filter((i) => i.enabled)
     .filter((i) => {
@@ -168,10 +138,7 @@ function findFitDimensionItem(
   return candidates[0];
 }
 
-export function calculateQuote(
-  product: ProductWithOptions,
-  rawSelections: SelectedOption[],
-): QuoteResult {
+export function calculateQuote(product: ProductWithOptions, rawSelections: SelectedOption[]): QuoteResult {
   const errors: string[] = [];
   const groupById = new Map(product.optionGroups.map((g) => [g.id, g]));
 
@@ -184,10 +151,7 @@ export function calculateQuote(
       if (isGroupVisible(g, activeSelections)) next.add(g.id);
     }
     activeSelections = rawSelections.filter((s) => next.has(s.groupId));
-    if (
-      next.size === visibleGroupIds.size &&
-      [...next].every((id) => visibleGroupIds.has(id))
-    ) {
+    if (next.size === visibleGroupIds.size && [...next].every((id) => visibleGroupIds.has(id))) {
       visibleGroupIds = next;
       break;
     }
@@ -227,15 +191,11 @@ export function calculateQuote(
       const h = sel.heightMm ?? 0;
       // 그룹의 maxWidthMm / maxHeightMm 상한 검증
       if (group.maxWidthMm != null && w > group.maxWidthMm) {
-        errors.push(
-          `${group.name}: 최대 가로 ${group.maxWidthMm}mm 까지 입력할 수 있습니다`,
-        );
+        errors.push(`${group.name}: 최대 가로 ${group.maxWidthMm}mm 까지 입력할 수 있습니다`);
         continue;
       }
       if (group.maxHeightMm != null && h > group.maxHeightMm) {
-        errors.push(
-          `${group.name}: 최대 세로 ${group.maxHeightMm}mm 까지 입력할 수 있습니다`,
-        );
+        errors.push(`${group.name}: 최대 세로 ${group.maxHeightMm}mm 까지 입력할 수 있습니다`);
         continue;
       }
       if (w > 0 && h > 0) {
@@ -274,25 +234,18 @@ export function calculateQuote(
     }
 
     // (b) SHEET_COUNT / QUANTITY with allowDirectInput — 직접 입력 + range 매칭
-    if (
-      (group.kind === "SHEET_COUNT" || group.kind === "QUANTITY") &&
-      group.allowDirectInput
-    ) {
+    if ((group.kind === "SHEET_COUNT" || group.kind === "QUANTITY") && group.allowDirectInput) {
       const v = sel.directValue ?? 0;
       if (!Number.isFinite(v) || v <= 0) {
         errors.push(`required direct input missing: ${group.name}`);
         continue;
       }
       if (group.minDirectInput != null && v < group.minDirectInput) {
-        errors.push(
-          `${group.name}: 최소 ${group.minDirectInput} 이상 입력해야 합니다`,
-        );
+        errors.push(`${group.name}: 최소 ${group.minDirectInput} 이상 입력해야 합니다`);
         continue;
       }
       if (group.maxDirectInput != null && v > group.maxDirectInput) {
-        errors.push(
-          `${group.name}: 최대 ${group.maxDirectInput} 까지 입력할 수 있습니다`,
-        );
+        errors.push(`${group.name}: 최대 ${group.maxDirectInput} 까지 입력할 수 있습니다`);
         continue;
       }
       // range 옵션 매칭 (없으면 가상 아이템)
@@ -381,21 +334,13 @@ export function calculateQuote(
     if (r.qtyValue != null) quantity = r.qtyValue;
     else if (r.group.kind === "QUANTITY") quantity = r.item.multiplier || 1;
     if (r.areaMm2 != null && r.areaMm2 > 0) areaMm2 = r.areaMm2;
-    else if (
-      r.group.kind === "DIMENSIONS" &&
-      r.item.widthMm &&
-      r.item.heightMm
-    ) {
+    else if (r.group.kind === "DIMENSIONS" && r.item.widthMm && r.item.heightMm) {
       areaMm2 = r.item.widthMm * r.item.heightMm;
     }
     if (r.dimW && r.dimH) {
       trimW = r.dimW;
       trimH = r.dimH;
-    } else if (
-      r.group.kind === "DIMENSIONS" &&
-      r.item.widthMm &&
-      r.item.heightMm
-    ) {
+    } else if (r.group.kind === "DIMENSIONS" && r.item.widthMm && r.item.heightMm) {
       trimW = r.item.widthMm;
       trimH = r.item.heightMm;
     }
@@ -409,10 +354,7 @@ export function calculateQuote(
   //     coverH = trimH + bleed × 2
   let innerThicknessMm = 0;
   for (const r of resolved) {
-    if (
-      r.group.kind === "INNER_PAPER" &&
-      r.item.thicknessMm
-    ) {
+    if (r.group.kind === "INNER_PAPER" && r.item.thicknessMm) {
       innerThicknessMm = r.item.thicknessMm;
     }
   }
@@ -437,8 +379,7 @@ export function calculateQuote(
     if (r.group.perSheet) c *= sheets;
     if (r.group.perQuantity) c *= quantity;
     if (r.group.perArea) {
-      const isCover =
-        r.group.kind === "COVER_PAPER";
+      const isCover = r.group.kind === "COVER_PAPER";
       c *= isCover ? coverAreaRatio : areaRatio;
     }
     optionsAddPrice += c;

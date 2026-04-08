@@ -28,9 +28,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
   const [categoryNo, setCategoryNo] = useState<number | "">("");
   const [display, setDisplay] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">(
-    "FLAT_PRINT",
-  );
+  const [template, setTemplate] = useState<"NONE" | "BOOKLET" | "FLAT_PRINT">("FLAT_PRINT");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -63,11 +61,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
       <input type="hidden" name="mallId" value={mallId} />
       <input type="hidden" name="template" value={template} />
       <Section title="① 몰 선택">
-        <select
-          value={mallId}
-          onChange={(e) => setMallId(e.target.value)}
-          className={inputCls}
-        >
+        <select value={mallId} onChange={(e) => setMallId(e.target.value)} className={inputCls}>
           {malls.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name} ({m.mallId})
@@ -76,10 +70,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
         </select>
       </Section>
 
-      <Section
-        title="② 상품 종류"
-        hint="선택한 종류에 맞는 옵션 그룹이 자동으로 생성됩니다."
-      >
+      <Section title="② 상품 종류" hint="선택한 종류에 맞는 옵션 그룹이 자동으로 생성됩니다.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {(
             [
@@ -103,12 +94,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
               >
                 <div className="text-xs font-semibold">{t.title}</div>
                 <div
-                  className={
-                    "mt-0.5 text-[10px] " +
-                    (active
-                      ? "text-zinc-300 dark:text-zinc-600"
-                      : "text-zinc-500")
-                  }
+                  className={"mt-0.5 text-[10px] " + (active ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-500")}
                 >
                   {t.desc}
                 </div>
@@ -118,10 +104,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
         </div>
       </Section>
 
-      <Section
-        title="③ 새 디스플레이 상품 정보"
-        hint="Cafe24에 새로 등록할 진열용 상품의 기본 정보입니다."
-      >
+      <Section title="③ 새 디스플레이 상품 정보" hint="Cafe24에 새로 등록할 진열용 상품의 기본 정보입니다.">
         <Field label="상품명">
           <input
             name="productName"
@@ -167,9 +150,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
           <select
             name="categoryNo"
             value={categoryNo}
-            onChange={(e) =>
-              setCategoryNo(e.target.value ? Number(e.target.value) : "")
-            }
+            onChange={(e) => setCategoryNo(e.target.value ? Number(e.target.value) : "")}
             className={inputCls}
           >
             <option value="">선택 안 함</option>
@@ -210,15 +191,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
 const inputCls =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div>
@@ -230,18 +203,10 @@ function Section({
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-zinc-600 dark:text-zinc-400">
-        {label}
-      </span>
+      <span className="mb-1 block text-xs text-zinc-600 dark:text-zinc-400">{label}</span>
       {children}
     </label>
   );

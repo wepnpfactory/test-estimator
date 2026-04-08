@@ -38,9 +38,7 @@ const FLAT_PRESETS: Preset[] = [
 ];
 
 const ALL_PRESETS: Preset[] = Array.from(
-  new Map(
-    [...BOOKLET_PRESETS, ...FLAT_PRESETS].map((p) => [p.label, p]),
-  ).values(),
+  new Map([...BOOKLET_PRESETS, ...FLAT_PRESETS].map((p) => [p.label, p])).values()
 );
 
 interface Props {
@@ -56,14 +54,7 @@ function findMatchingPreset(area: number, presets: Preset[]): Preset | undefined
   return presets.find((p) => p.w * p.h === area);
 }
 
-export function BaseAreaForm({
-  productId,
-  current,
-  bleed,
-  leadTimeDays,
-  template,
-  action,
-}: Props) {
+export function BaseAreaForm({ productId, current, bleed, leadTimeDays, template, action }: Props) {
   const [w, setW] = useState<number>(() => {
     const m = findMatchingPreset(current, ALL_PRESETS);
     return m ? m.w : Math.round(Math.sqrt(current));
@@ -102,16 +93,9 @@ export function BaseAreaForm({
   }
 
   return (
-    <form
-      action={onSubmit}
-      className="mt-3 flex flex-wrap items-center gap-2"
-    >
+    <form action={onSubmit} className="mt-3 flex flex-wrap items-center gap-2">
       <span className={labelCaptionCls}>기준 사이즈</span>
-      <select
-        onChange={(e) => applyPreset(e.target.value)}
-        defaultValue=""
-        className={inputCls + " w-44"}
-      >
+      <select onChange={(e) => applyPreset(e.target.value)} defaultValue="" className={inputCls + " w-44"}>
         <option value="">프리셋 선택</option>
         {(template === "BOOKLET" || template === "NONE") && (
           <optgroup label="📖 책자">
@@ -146,9 +130,7 @@ export function BaseAreaForm({
         className={inputCls + " w-16 text-right"}
       />
       <span className="text-xs text-text-secondary">mm</span>
-      <span className="font-mono text-xs text-text-secondary">
-        = {area.toLocaleString()}mm²
-      </span>
+      <span className="font-mono text-xs text-text-secondary">= {area.toLocaleString()}mm²</span>
       <span className="text-xs text-text-disabled">·</span>
       <label className="flex items-center gap-1.5 text-xs text-text-secondary">
         도련
@@ -175,9 +157,7 @@ export function BaseAreaForm({
       <button disabled={pending} className={buttonCls}>
         {pending ? "저장 중…" : "저장"}
       </button>
-      <span className="text-[11px] text-text-tertiary">
-        면적 비례 가격 계산의 기준 (perArea 옵션의 분모)
-      </span>
+      <span className="text-[11px] text-text-tertiary">면적 비례 가격 계산의 기준 (perArea 옵션의 분모)</span>
     </form>
   );
 }

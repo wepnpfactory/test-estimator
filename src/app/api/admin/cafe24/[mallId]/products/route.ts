@@ -5,10 +5,7 @@ import { listProducts } from "@/lib/cafe24/products";
 // 관리자 전용. MVP 단계에선 인증 없이 동작 (Phase B에서 보안 추가).
 // Cafe24 상품 목록을 가져오는 프록시. mallId 는 우리 DB 의 Cafe24Mall.id (cuid).
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ mallId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ mallId: string }> }) {
   const { mallId } = await params;
   const search = req.nextUrl.searchParams.get("search") ?? undefined;
   const limit = Number(req.nextUrl.searchParams.get("limit") ?? 20);
@@ -31,9 +28,6 @@ export async function GET(
     });
     return NextResponse.json({ products });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "fetch failed" },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: e instanceof Error ? e.message : "fetch failed" }, { status: 502 });
   }
 }

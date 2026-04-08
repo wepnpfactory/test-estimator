@@ -59,9 +59,7 @@ function normalize(p: RawCafe24Product): Cafe24ProductSummary {
   };
 }
 
-export async function listProducts(
-  params: ListProductsParams,
-): Promise<Cafe24ProductSummary[]> {
+export async function listProducts(params: ListProductsParams): Promise<Cafe24ProductSummary[]> {
   const { mall, search, limit = 20, offset = 0, shopNo, display, selling } = params;
   const query: Record<string, string | number | undefined> = {
     shop_no: shopNo ?? mall.defaultShopNo ?? 1,
@@ -82,17 +80,13 @@ export async function listProducts(
 export async function getProduct(
   mall: Cafe24Mall,
   productNo: number,
-  shopNo?: number,
+  shopNo?: number
 ): Promise<Cafe24ProductSummary | null> {
   try {
-    const res = await cafe24Fetch<{ product?: RawCafe24Product }>(
-      mall,
-      `/api/v2/admin/products/${productNo}`,
-      {
-        method: "GET",
-        query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
-      },
-    );
+    const res = await cafe24Fetch<{ product?: RawCafe24Product }>(mall, `/api/v2/admin/products/${productNo}`, {
+      method: "GET",
+      query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
+    });
     return res.product ? normalize(res.product) : null;
   } catch {
     return null;
@@ -130,22 +124,16 @@ export async function updateFacadeProductPrice(params: {
   if (!Number.isFinite(params.price) || params.price < 0) {
     throw new Error(`invalid price: ${params.price}`);
   }
-  await cafe24Fetch(
-    params.mall,
-    `/api/v2/admin/products/${params.productNo}`,
-    {
-      method: "PUT",
-      body: {
-        shop_no: params.shopNo ?? params.mall.defaultShopNo ?? 1,
-        request: { price: String(Math.floor(params.price)) },
-      },
+  await cafe24Fetch(params.mall, `/api/v2/admin/products/${params.productNo}`, {
+    method: "PUT",
+    body: {
+      shop_no: params.shopNo ?? params.mall.defaultShopNo ?? 1,
+      request: { price: String(Math.floor(params.price)) },
     },
-  );
+  });
 }
 
-export async function createFacadeProduct(
-  input: CreateFacadeProductInput,
-): Promise<Cafe24ProductSummary> {
+export async function createFacadeProduct(input: CreateFacadeProductInput): Promise<Cafe24ProductSummary> {
   if (!Number.isFinite(input.price) || input.price < 0) {
     throw new Error(`invalid price: ${input.price}`);
   }
@@ -179,9 +167,7 @@ export async function createFacadeProduct(
     request.detail_image = input.detailImageUrl;
   }
   if (typeof input.categoryNo === "number" && input.categoryNo > 0) {
-    request.add_category_no = [
-      { category_no: input.categoryNo, recommend: "F", new: "T" },
-    ];
+    request.add_category_no = [{ category_no: input.categoryNo, recommend: "F", new: "T" }];
   }
 
   const body = {
@@ -189,10 +175,9 @@ export async function createFacadeProduct(
     request,
   };
 
-  const res = await cafe24Fetch<{ product: RawCafe24Product }>(
-    input.mall,
-    "/api/v2/admin/products",
-    { method: "POST", body },
-  );
+  const res = await cafe24Fetch<{ product: RawCafe24Product }>(input.mall, "/api/v2/admin/products", {
+    method: "POST",
+    body,
+  });
   return normalize(res.product);
 }

@@ -3,16 +3,8 @@
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { buttonGhostCls, inputCls } from "../form-styles";
-import {
-  ConditionPicker,
-  parseConditions,
-  useConditionPatch,
-} from "./condition-picker";
-import type {
-  OptionGroupActions,
-  OptionGroupWithItems,
-  OptionItemRow as OptionItemRowType,
-} from "./types";
+import { ConditionPicker, parseConditions, useConditionPatch } from "./condition-picker";
+import type { OptionGroupActions, OptionGroupWithItems, OptionItemRow as OptionItemRowType } from "./types";
 
 interface Props {
   productId: string;
@@ -60,17 +52,10 @@ function Cell({
   patch: (name: string, value: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState<string>(
-    defaultValue == null ? "" : String(defaultValue),
-  );
+  const [val, setVal] = useState<string>(defaultValue == null ? "" : String(defaultValue));
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const alignCls =
-    align === "right"
-      ? "text-right"
-      : align === "center"
-        ? "text-center"
-        : "text-left";
+  const alignCls = align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
 
   function commit() {
     setEditing(false);
@@ -115,22 +100,13 @@ function Cell({
   );
 }
 
-export function OptionItemRow({
-  productId,
-  group,
-  item,
-  index,
-  total,
-  precedingGroups,
-  actions,
-}: Props) {
+export function OptionItemRow({ productId, group, item, index, total, precedingGroups, actions }: Props) {
   const [, startTransition] = useTransition();
   const isSheetQty = group.kind === "SHEET_COUNT" || group.kind === "QUANTITY";
   const showMultiplier = isSheetQty && !group.allowDirectInput;
   const showRange = isSheetQty && group.allowDirectInput;
   const showDims = group.kind === "DIMENSIONS";
-  const showThickness =
-    group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
+  const showThickness = group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER";
   const showImage = group.displayType === "SWATCH";
   const showFacets = group.displayType === "CASCADE";
   const suffix = priceSuffix(group);
@@ -146,15 +122,7 @@ export function OptionItemRow({
   return (
     <li className="flex items-center gap-1 bg-surface-subtle px-2 py-1 text-xs">
       <div className="flex flex-col">
-        <form
-          action={actions.moveItem.bind(
-            null,
-            productId,
-            group.id,
-            item.id,
-            "up",
-          )}
-        >
+        <form action={actions.moveItem.bind(null, productId, group.id, item.id, "up")}>
           <button
             type="submit"
             disabled={index === 0}
@@ -164,15 +132,7 @@ export function OptionItemRow({
             <ChevronUp className="size-3" aria-hidden />
           </button>
         </form>
-        <form
-          action={actions.moveItem.bind(
-            null,
-            productId,
-            group.id,
-            item.id,
-            "down",
-          )}
-        >
+        <form action={actions.moveItem.bind(null, productId, group.id, item.id, "down")}>
           <button
             type="submit"
             disabled={index === total - 1}
@@ -194,11 +154,7 @@ export function OptionItemRow({
               placeholder={group.facetALabel ?? "1차"}
               display={
                 <span className="truncate text-foreground">
-                  {item.facetA || (
-                    <span className="text-text-disabled">
-                      {group.facetALabel ?? "1차"}
-                    </span>
-                  )}
+                  {item.facetA || <span className="text-text-disabled">{group.facetALabel ?? "1차"}</span>}
                 </span>
               }
               patch={patch}
@@ -211,11 +167,7 @@ export function OptionItemRow({
               placeholder={group.facetBLabel ?? "2차"}
               display={
                 <span className="truncate text-foreground">
-                  {item.facetB || (
-                    <span className="text-text-disabled">
-                      {group.facetBLabel ?? "2차"}
-                    </span>
-                  )}
+                  {item.facetB || <span className="text-text-disabled">{group.facetBLabel ?? "2차"}</span>}
                 </span>
               }
               patch={patch}
@@ -229,11 +181,7 @@ export function OptionItemRow({
         <Cell
           name="label"
           defaultValue={item.label}
-          display={
-            <span className="truncate font-medium text-foreground">
-              {item.label}
-            </span>
-          }
+          display={<span className="truncate font-medium text-foreground">{item.label}</span>}
           width="w-full"
           patch={patch}
         />
@@ -244,11 +192,7 @@ export function OptionItemRow({
         <Cell
           name="value"
           defaultValue={item.value}
-          display={
-            <span className="truncate font-mono text-[11px] text-text-tertiary">
-              {item.value}
-            </span>
-          }
+          display={<span className="truncate font-mono text-[11px] text-text-tertiary">{item.value}</span>}
           patch={patch}
         />
       </div>
@@ -265,9 +209,7 @@ export function OptionItemRow({
               <span className="tabular-nums text-text-secondary">
                 {item.addPrice > 0 ? "+" : ""}
                 {item.addPrice.toLocaleString()}원
-                {suffix && (
-                  <span className="ms-0.5 text-text-tertiary">{suffix}</span>
-                )}
+                {suffix && <span className="ms-0.5 text-text-tertiary">{suffix}</span>}
               </span>
             }
             patch={patch}
@@ -283,11 +225,7 @@ export function OptionItemRow({
             defaultValue={item.multiplier}
             type="number"
             align="right"
-            display={
-              <span className="tabular-nums text-text-secondary">
-                ×{item.multiplier}
-              </span>
-            }
+            display={<span className="tabular-nums text-text-secondary">×{item.multiplier}</span>}
             patch={patch}
           />
         </div>
@@ -301,11 +239,7 @@ export function OptionItemRow({
               type="number"
               align="right"
               placeholder="min"
-              display={
-                <span className="tabular-nums text-text-tertiary">
-                  {item.minRange ?? "—"}
-                </span>
-              }
+              display={<span className="tabular-nums text-text-tertiary">{item.minRange ?? "—"}</span>}
               patch={patch}
             />
           </div>
@@ -317,11 +251,7 @@ export function OptionItemRow({
               type="number"
               align="right"
               placeholder="max"
-              display={
-                <span className="tabular-nums text-text-tertiary">
-                  {item.maxRange ?? "—"}
-                </span>
-              }
+              display={<span className="tabular-nums text-text-tertiary">{item.maxRange ?? "—"}</span>}
               patch={patch}
             />
           </div>
@@ -335,11 +265,7 @@ export function OptionItemRow({
               defaultValue={item.widthMm}
               type="number"
               align="right"
-              display={
-                <span className="tabular-nums text-text-tertiary">
-                  {item.widthMm ?? "—"}
-                </span>
-              }
+              display={<span className="tabular-nums text-text-tertiary">{item.widthMm ?? "—"}</span>}
               patch={patch}
             />
           </div>
@@ -350,11 +276,7 @@ export function OptionItemRow({
               defaultValue={item.heightMm}
               type="number"
               align="right"
-              display={
-                <span className="tabular-nums text-text-tertiary">
-                  {item.heightMm ?? "—"}
-                </span>
-              }
+              display={<span className="tabular-nums text-text-tertiary">{item.heightMm ?? "—"}</span>}
               patch={patch}
             />
           </div>
@@ -381,11 +303,7 @@ export function OptionItemRow({
 
       {/* disabledWhen — 모달로 선행 옵션 선택 */}
       <div className="flex w-20 justify-end">
-        <DisabledWhenCell
-          item={item}
-          precedingGroups={precedingGroups}
-          patch={patch}
-        />
+        <DisabledWhenCell item={item} precedingGroups={precedingGroups} patch={patch} />
       </div>
 
       {/* leadTime 칼럼 — 항상 노출, 입력 없을 땐 dash */}
@@ -398,9 +316,7 @@ export function OptionItemRow({
           align="right"
           display={
             item.leadTimeDays > 0 ? (
-              <span className="tabular-nums text-brand">
-                +{item.leadTimeDays}일
-              </span>
+              <span className="tabular-nums text-brand">+{item.leadTimeDays}일</span>
             ) : (
               <span className="text-text-disabled">—</span>
             )
@@ -416,11 +332,7 @@ export function OptionItemRow({
             name="imageUrl"
             defaultValue={item.imageUrl}
             type="url"
-            display={
-              <span className="truncate text-[11px] text-text-tertiary">
-                {item.imageUrl || "이미지…"}
-              </span>
-            }
+            display={<span className="truncate text-[11px] text-text-tertiary">{item.imageUrl || "이미지…"}</span>}
             patch={patch}
           />
         </div>

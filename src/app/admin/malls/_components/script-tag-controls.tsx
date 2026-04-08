@@ -73,9 +73,7 @@ export function ScriptTagControls({ mallDbId }: { mallDbId: string }) {
     <div className="mt-4 rounded-lg border border-zinc-100 bg-zinc-50/60 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-950/40">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="font-medium text-zinc-700 dark:text-zinc-300">
-            embed.js 자동 설치
-          </div>
+          <div className="font-medium text-zinc-700 dark:text-zinc-300">embed.js 자동 설치</div>
           <div className="mt-0.5 text-[11px] text-zinc-500">
             상품 상세 페이지에 견적 폼이 자동 노출됩니다 (스킨 수정 불필요).
           </div>
@@ -83,9 +81,7 @@ export function ScriptTagControls({ mallDbId }: { mallDbId: string }) {
             <div className="mt-1 text-[11px]">
               상태:{" "}
               {status.installed ? (
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  설치됨
-                </span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">설치됨</span>
               ) : (
                 <span className="text-zinc-500">미설치</span>
               )}{" "}

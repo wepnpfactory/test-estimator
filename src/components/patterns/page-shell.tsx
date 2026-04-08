@@ -1,16 +1,11 @@
-import * as React from "react"
-import { cn } from "../ui/utils"
+import * as React from "react";
+import { cn } from "../ui/utils";
 
 interface PageShellProps extends React.ComponentProps<"div"> {
-  maxWidth?: string
+  maxWidth?: string;
 }
 
-function PageShell({
-  maxWidth = "430px",
-  className,
-  children,
-  ...props
-}: PageShellProps) {
+function PageShell({ maxWidth = "430px", className, children, ...props }: PageShellProps) {
   return (
     <div className="min-h-screen bg-surface-page" {...props}>
       <div
@@ -21,22 +16,18 @@ function PageShell({
         {children}
       </div>
     </div>
-  )
+  );
 }
 
-interface PageContentProps extends React.ComponentProps<"main"> {}
+type PageContentProps = React.ComponentProps<"main">;
 
 function PageContent({ className, children, ...props }: PageContentProps) {
   return (
-    <main
-      data-slot="page-content"
-      className={cn("pb-24 space-y-6", className)}
-      {...props}
-    >
+    <main data-slot="page-content" className={cn("pb-24 space-y-6", className)} {...props}>
       {children}
     </main>
-  )
+  );
 }
 
-export { PageShell, PageContent }
-export type { PageShellProps, PageContentProps }
+export { PageContent, PageShell };
+export type { PageContentProps, PageShellProps };

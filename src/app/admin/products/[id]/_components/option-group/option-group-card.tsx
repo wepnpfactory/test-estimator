@@ -24,18 +24,9 @@ function fmtSigned(n: number): string {
   return `${n > 0 ? "+" : ""}${n.toLocaleString()}`;
 }
 
-export function OptionGroupCard({
-  productId,
-  group,
-  index,
-  total,
-  allGroups,
-  actions,
-}: Props) {
+export function OptionGroupCard({ productId, group, index, total, allGroups, actions }: Props) {
   // 현재 그룹보다 sortOrder 가 앞선 그룹들만 조건 후보로 사용
-  const precedingGroups = allGroups.filter(
-    (g) => g.sortOrder < group.sortOrder,
-  );
+  const precedingGroups = allGroups.filter((g) => g.sortOrder < group.sortOrder);
   const itemCount = group.items.length;
   const addPrices = group.items.map((i) => i.addPrice);
   const minAdd = addPrices.length ? Math.min(...addPrices) : 0;
@@ -48,9 +39,7 @@ export function OptionGroupCard({
 
   const summary = (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <span className="truncate text-sm font-semibold text-foreground">
-        {group.name}
-      </span>
+      <span className="truncate text-sm font-semibold text-foreground">{group.name}</span>
       <KindBadge kind={group.kind} />
       {group.required && (
         <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[11px] font-medium text-destructive">
@@ -60,9 +49,7 @@ export function OptionGroupCard({
       <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-text-secondary">
         {itemCount}개
       </span>
-      <span className="ms-auto tabular-nums text-[11px] font-medium text-text-secondary">
-        {priceRange}
-      </span>
+      <span className="ms-auto tabular-nums text-[11px] font-medium text-text-secondary">{priceRange}</span>
     </div>
   );
 
@@ -71,9 +58,7 @@ export function OptionGroupCard({
       <div className="flex items-center gap-2 px-3 py-3">
         {/* 순서 변경 */}
         <div className="flex flex-col gap-1.5">
-          <form
-            action={actions.moveGroup.bind(null, productId, group.id, "up")}
-          >
+          <form action={actions.moveGroup.bind(null, productId, group.id, "up")}>
             <button
               type="submit"
               disabled={index === 0}
@@ -83,9 +68,7 @@ export function OptionGroupCard({
               <ChevronUp className="size-3.5" aria-hidden />
             </button>
           </form>
-          <form
-            action={actions.moveGroup.bind(null, productId, group.id, "down")}
-          >
+          <form action={actions.moveGroup.bind(null, productId, group.id, "down")}>
             <button
               type="submit"
               disabled={index === total - 1}
@@ -98,10 +81,7 @@ export function OptionGroupCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <CollapsibleSection
-            storageKey={`optgrp:${productId}:${group.id}`}
-            summary={summary}
-          >
+          <CollapsibleSection storageKey={`optgrp:${productId}:${group.id}`} summary={summary}>
             <div className="space-y-3 border-t border-border pt-3">
               <OptionGroupSettings
                 productId={productId}
@@ -112,10 +92,7 @@ export function OptionGroupCard({
 
               {/* 페이지수·부수 직접 입력 그룹은 아이템 목록 숨김 — 숫자 입력만으로 동작 */}
               {(() => {
-                const hideItems =
-                  (group.kind === "SHEET_COUNT" ||
-                    group.kind === "QUANTITY") &&
-                  group.allowDirectInput;
+                const hideItems = (group.kind === "SHEET_COUNT" || group.kind === "QUANTITY") && group.allowDirectInput;
                 if (hideItems) {
                   return (
                     <div className="rounded-md border border-dashed border-border px-3 py-3 text-center text-[11px] text-text-tertiary">
@@ -128,7 +105,8 @@ export function OptionGroupCard({
                   <>
                     {isDimensions && (
                       <div className="rounded-md border border-dashed border-info/30 bg-info/5 px-3 py-2 text-[11px] text-text-secondary">
-                        💡 사이즈 그룹은 가격을 가지지 않습니다. 가격은 용지 그룹의 <b>면적 곱셈(perArea)</b> 으로 자동 계산됩니다.
+                        💡 사이즈 그룹은 가격을 가지지 않습니다. 가격은 용지 그룹의 <b>면적 곱셈(perArea)</b> 으로 자동
+                        계산됩니다.
                       </div>
                     )}
 
@@ -164,32 +142,15 @@ export function OptionGroupCard({
                           : "grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
                       }
                     >
-                      <input
-                        name="label"
-                        placeholder="표시명"
-                        className={inputFull}
-                      />
-                      <input
-                        name="value"
-                        placeholder="value"
-                        className={inputFull}
-                      />
+                      <input name="label" placeholder="표시명" className={inputFull} />
+                      <input name="value" placeholder="value" className={inputFull} />
                       {!isDimensions && (
-                        <input
-                          name="addPrice"
-                          type="number"
-                          placeholder="추가금액"
-                          className={inputFull}
-                        />
+                        <input name="addPrice" type="number" placeholder="추가금액" className={inputFull} />
                       )}
                       <button className={buttonGhostCls}>추가</button>
                     </form>
 
-                    <OptionBulkPaste
-                      groupId={group.id}
-                      productId={productId}
-                      bulkAction={actions.bulkAddItems}
-                    />
+                    <OptionBulkPaste groupId={group.id} productId={productId} bulkAction={actions.bulkAddItems} />
                   </>
                 );
               })()}
@@ -220,11 +181,7 @@ interface AddFormProps {
 export function AddOptionGroupForm({ productId, action }: AddFormProps) {
   return (
     <form action={action.bind(null, productId)} className="mt-4 flex gap-2">
-      <input
-        name="name"
-        placeholder="새 옵션 그룹 이름 (예: 표지 재질)"
-        className={inputCls + " flex-1"}
-      />
+      <input name="name" placeholder="새 옵션 그룹 이름 (예: 표지 재질)" className={inputCls + " flex-1"} />
       <button className={buttonCls}>+ 그룹 추가</button>
     </form>
   );

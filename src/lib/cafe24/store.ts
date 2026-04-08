@@ -19,15 +19,10 @@ interface StoreResponse {
  * 몰의 storefront origin (https 포함)을 best-effort로 알아낸다.
  * 우선순위: primary_domain > base_domain > {mallId}.cafe24.com
  */
-export async function fetchStorefrontOrigin(
-  mall: Cafe24Mall,
-): Promise<string> {
+export async function fetchStorefrontOrigin(mall: Cafe24Mall): Promise<string> {
   try {
     const res = await cafe24Fetch<StoreResponse>(mall, "/api/v2/admin/store");
-    const domain =
-      res.store?.primary_domain ||
-      res.store?.base_domain ||
-      `${mall.mallId}.cafe24.com`;
+    const domain = res.store?.primary_domain || res.store?.base_domain || `${mall.mallId}.cafe24.com`;
     return normalizeOrigin(domain);
   } catch {
     return `https://${mall.mallId}.cafe24.com`;

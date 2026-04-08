@@ -6,31 +6,18 @@ import { prisma } from "@/lib/prisma";
 import { updateFacadeProductPrice } from "@/lib/cafe24/products";
 import { ProductTypePanel } from "./_components/product-type-panel";
 import { type ParsedItem } from "./_components/option-bulk-paste";
-import {
-  AddOptionGroupForm,
-  OptionGroupCard,
-  type OptionGroupActions,
-} from "./_components/option-group";
+import { AddOptionGroupForm, OptionGroupCard, type OptionGroupActions } from "./_components/option-group";
 import { scaffoldProductGroups } from "@/lib/product-templates";
 import type { ProductTemplate } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 
-type GroupKindStr =
-  | "NORMAL"
-  | "SHEET_COUNT"
-  | "QUANTITY"
-  | "DIMENSIONS"
-  | "INNER_PAPER"
-  | "COVER_PAPER";
+type GroupKindStr = "NORMAL" | "SHEET_COUNT" | "QUANTITY" | "DIMENSIONS" | "INNER_PAPER" | "COVER_PAPER";
 
 // ─── server actions ─────────────────────────────────────────
 
 // 서버 액션 소유권 검증 헬퍼.
 // 임의 groupId/itemId 가 다른 상품의 데이터에 접근하지 못하도록 productId 와 묶어서만 조작한다.
-async function assertGroupOwned(
-  productId: string,
-  groupId: string,
-): Promise<boolean> {
+async function assertGroupOwned(productId: string, groupId: string): Promise<boolean> {
   const g = await prisma.optionGroup.findFirst({
     where: { id: groupId, productId },
     select: { id: true },
@@ -38,10 +25,7 @@ async function assertGroupOwned(
   return !!g;
 }
 
-async function assertItemOwned(
-  productId: string,
-  itemId: string,
-): Promise<boolean> {
+async function assertItemOwned(productId: string, itemId: string): Promise<boolean> {
   const i = await prisma.optionItem.findFirst({
     where: { id: itemId, group: { productId } },
     select: { id: true },
@@ -76,11 +60,7 @@ async function addOptionGroup(productId: string, formData: FormData) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function updateOptionGroup(
-  productId: string,
-  groupId: string,
-  formData: FormData,
-) {
+async function updateOptionGroup(productId: string, groupId: string, formData: FormData) {
   "use server";
   if (!(await assertGroupOwned(productId, groupId))) return;
   const kindRaw = String(formData.get("kind") || "NORMAL") as GroupKindStr;
@@ -111,13 +91,7 @@ async function updateOptionGroup(
   const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
   const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
   const displayTypeRaw = String(formData.get("displayType") || "SELECT");
-  const displayType:
-    | "SELECT"
-    | "RADIO"
-    | "SWATCH"
-    | "NUMBER"
-    | "CHECKBOX"
-    | "CASCADE" =
+  const displayType: "SELECT" | "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" | "CASCADE" =
     displayTypeRaw === "RADIO" ||
     displayTypeRaw === "SWATCH" ||
     displayTypeRaw === "NUMBER" ||
@@ -142,23 +116,11 @@ async function updateOptionGroup(
       multiSelect,
       facetALabel,
       facetBLabel,
-      minDirectInput:
-        minDirectInput !== null && Number.isFinite(minDirectInput)
-          ? minDirectInput
-          : null,
-      maxDirectInput:
-        maxDirectInput !== null && Number.isFinite(maxDirectInput)
-          ? maxDirectInput
-          : null,
+      minDirectInput: minDirectInput !== null && Number.isFinite(minDirectInput) ? minDirectInput : null,
+      maxDirectInput: maxDirectInput !== null && Number.isFinite(maxDirectInput) ? maxDirectInput : null,
       showWhen,
-      maxWidthMm:
-        maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0
-          ? maxWidthMm
-          : null,
-      maxHeightMm:
-        maxHeightMm !== null && Number.isFinite(maxHeightMm) && maxHeightMm > 0
-          ? maxHeightMm
-          : null,
+      maxWidthMm: maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0 ? maxWidthMm : null,
+      maxHeightMm: maxHeightMm !== null && Number.isFinite(maxHeightMm) && maxHeightMm > 0 ? maxHeightMm : null,
     },
   });
   revalidatePath(`/admin/products/${productId}`);
@@ -187,14 +149,10 @@ async function resetProductGroupsFromTemplate(productId: string) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function updateProductTemplate(
-  productId: string,
-  formData: FormData,
-) {
+async function updateProductTemplate(productId: string, formData: FormData) {
   "use server";
   const raw = String(formData.get("template") || "NONE").toUpperCase();
-  const template: ProductTemplate =
-    raw === "BOOKLET" || raw === "FLAT_PRINT" ? raw : "NONE";
+  const template: ProductTemplate = raw === "BOOKLET" || raw === "FLAT_PRINT" ? raw : "NONE";
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -208,10 +166,7 @@ async function updateProductTemplate(
   });
 
   // 기존 그룹이 0개이고 template 이 NONE 이 아니면 스캐폴드
-  if (
-    product._count.optionGroups === 0 &&
-    template !== "NONE"
-  ) {
+  if (product._count.optionGroups === 0 && template !== "NONE") {
     await scaffoldProductGroups(productId, template);
   }
 
@@ -246,11 +201,7 @@ async function updateProductMeta(productId: string, formData: FormData) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function moveOptionGroup(
-  productId: string,
-  groupId: string,
-  direction: "up" | "down",
-) {
+async function moveOptionGroup(productId: string, groupId: string, direction: "up" | "down") {
   "use server";
   if (!(await assertGroupOwned(productId, groupId))) return;
   const groups = await prisma.optionGroup.findMany({
@@ -277,11 +228,7 @@ async function moveOptionGroup(
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function addOptionItem(
-  groupId: string,
-  productId: string,
-  formData: FormData,
-) {
+async function addOptionItem(groupId: string, productId: string, formData: FormData) {
   "use server";
   if (!(await assertGroupOwned(productId, groupId))) return;
   const label = String(formData.get("label") || "").trim();
@@ -295,11 +242,7 @@ async function addOptionItem(
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function updateOptionItem(
-  productId: string,
-  itemId: string,
-  formData: FormData,
-) {
+async function updateOptionItem(productId: string, itemId: string, formData: FormData) {
   "use server";
   if (!(await assertItemOwned(productId, itemId))) return;
   // patch 스타일 — formData 에 존재하는 key 만 업데이트, 나머지는 유지
@@ -409,17 +352,9 @@ async function deleteOptionItem(productId: string, itemId: string) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function moveOptionItem(
-  productId: string,
-  groupId: string,
-  itemId: string,
-  direction: "up" | "down",
-) {
+async function moveOptionItem(productId: string, groupId: string, itemId: string, direction: "up" | "down") {
   "use server";
-  if (
-    !(await assertGroupOwned(productId, groupId)) ||
-    !(await assertItemOwned(productId, itemId))
-  ) {
+  if (!(await assertGroupOwned(productId, groupId)) || !(await assertItemOwned(productId, itemId))) {
     return;
   }
   const items = await prisma.optionItem.findMany({
@@ -446,11 +381,7 @@ async function moveOptionItem(
   revalidatePath(`/admin/products/${productId}`);
 }
 
-async function bulkAddOptionItems(
-  groupId: string,
-  productId: string,
-  items: ParsedItem[],
-) {
+async function bulkAddOptionItems(groupId: string, productId: string, items: ParsedItem[]) {
   "use server";
   if (items.length === 0) return;
   if (!(await assertGroupOwned(productId, groupId))) return;
@@ -502,10 +433,7 @@ async function publishProduct(productId: string) {
         price: minPrice,
       });
     } catch (e) {
-      console.warn(
-        "[publish] Cafe24 price sync failed:",
-        e instanceof Error ? e.message : e,
-      );
+      console.warn("[publish] Cafe24 price sync failed:", e instanceof Error ? e.message : e);
     }
   }
   await prisma.product.update({
@@ -517,11 +445,7 @@ async function publishProduct(productId: string) {
 
 // ─── UI ───────────────────────────────────────────────
 
-export default async function EditProductPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const product = await prisma.product.findUnique({
     where: { id },
@@ -561,9 +485,8 @@ export default async function EditProductPage({
         <div>
           <h1 className="text-xl font-semibold">{product.name}</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            {product.mall.name} · Cafe24 #{product.cafe24ProductNo} · 기본가{" "}
-            {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
-            {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
+            {product.mall.name} · Cafe24 #{product.cafe24ProductNo} · 기본가 {product.basePrice.toLocaleString()}원 ·
+            기준 면적 {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
           </p>
           <ProductTypePanel
             productId={product.id}
@@ -578,9 +501,7 @@ export default async function EditProductPage({
           />
           <span
             className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-              product.status === "PUBLISHED"
-                ? "bg-success/10 text-success"
-                : "bg-muted text-text-secondary"
+              product.status === "PUBLISHED" ? "bg-success/10 text-success" : "bg-muted text-text-secondary"
             }`}
           >
             {product.status}
@@ -600,8 +521,7 @@ export default async function EditProductPage({
           <div>
             <h2 className="text-base font-semibold">옵션 그룹</h2>
             <p className="mt-0.5 text-[11px] text-text-tertiary">
-              그룹 머리글을 클릭해 값 목록을 펼치거나 접을 수 있습니다. 접힌
-              상태는 브라우저에 기억됩니다.
+              그룹 머리글을 클릭해 값 목록을 펼치거나 접을 수 있습니다. 접힌 상태는 브라우저에 기억됩니다.
             </p>
           </div>
           <div className="text-[11px] text-text-tertiary">총 {groupCount}개</div>
@@ -626,4 +546,3 @@ export default async function EditProductPage({
     </div>
   );
 }
-

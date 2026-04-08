@@ -68,17 +68,12 @@ function normalize(t: RawScriptTag): Cafe24ScriptTag {
   return {
     scriptNo: t.script_no,
     src: t.src,
-    displayLocation: Array.isArray(t.display_location)
-      ? t.display_location
-      : [t.display_location],
+    displayLocation: Array.isArray(t.display_location) ? t.display_location : [t.display_location],
     client_id: t.client_id,
   };
 }
 
-export async function listScriptTags(
-  mall: Cafe24Mall,
-  shopNo?: number,
-): Promise<Cafe24ScriptTag[]> {
+export async function listScriptTags(mall: Cafe24Mall, shopNo?: number): Promise<Cafe24ScriptTag[]> {
   const res = await cafe24Fetch<ListResponse>(mall, "/api/v2/admin/scripttags", {
     method: "GET",
     query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
@@ -86,19 +81,11 @@ export async function listScriptTags(
   return (res.scripttags ?? []).map(normalize);
 }
 
-export async function deleteScriptTag(
-  mall: Cafe24Mall,
-  scriptNo: number,
-  shopNo?: number,
-): Promise<void> {
-  await cafe24Fetch(
-    mall,
-    `/api/v2/admin/scripttags/${scriptNo}`,
-    {
-      method: "DELETE",
-      query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
-    },
-  );
+export async function deleteScriptTag(mall: Cafe24Mall, scriptNo: number, shopNo?: number): Promise<void> {
+  await cafe24Fetch(mall, `/api/v2/admin/scripttags/${scriptNo}`, {
+    method: "DELETE",
+    query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
+  });
 }
 
 export interface InstallScriptTagInput {
@@ -126,27 +113,14 @@ export interface InstallScriptTagResult {
   alreadyExisted: boolean;
 }
 
-export async function installScriptTag(
-  input: InstallScriptTagInput,
-): Promise<InstallScriptTagResult> {
-  const {
-    mall,
-    src,
-    locations = ["PRODUCT_DETAIL"],
-    shopNo,
-    replaceSameOrigin = true,
-    force = false,
-  } = input;
+export async function installScriptTag(input: InstallScriptTagInput): Promise<InstallScriptTagResult> {
+  const { mall, src, locations = ["PRODUCT_DETAIL"], shopNo, replaceSameOrigin = true, force = false } = input;
   const targetOrigin = new URL(src).origin;
 
   const existing = await listScriptTags(mall, shopNo);
 
   // exactMatch 도 제거 대상에 포함시킬지 여부
-  const exactMatch = existing.find(
-    (t) =>
-      t.src === src &&
-      locations.every((loc) => t.displayLocation.includes(loc)),
-  );
+  const exactMatch = existing.find((t) => t.src === src && locations.every((loc) => t.displayLocation.includes(loc)));
   if (exactMatch && !force) {
     return {
       installed: false,
@@ -173,26 +147,19 @@ export async function installScriptTag(
         await deleteScriptTag(mall, t.scriptNo, shopNo);
         removedCount++;
       } catch (e) {
-        console.warn(
-          `[script-tags] failed to delete ${t.scriptNo}:`,
-          e instanceof Error ? e.message : e,
-        );
+        console.warn(`[script-tags] failed to delete ${t.scriptNo}:`, e instanceof Error ? e.message : e);
       }
     }
   }
 
   async function postCreate() {
-    return cafe24Fetch<{ scripttag: RawScriptTag }>(
-      mall,
-      "/api/v2/admin/scripttags",
-      {
-        method: "POST",
-        body: {
-          shop_no: shopNo ?? mall.defaultShopNo ?? 1,
-          request: { src, display_location: locations },
-        },
+    return cafe24Fetch<{ scripttag: RawScriptTag }>(mall, "/api/v2/admin/scripttags", {
+      method: "POST",
+      body: {
+        shop_no: shopNo ?? mall.defaultShopNo ?? 1,
+        request: { src, display_location: locations },
       },
-    );
+    });
   }
 
   try {
@@ -217,7 +184,7 @@ export async function installScriptTag(
           } catch (delErr) {
             console.warn(
               "[script-tags] failed to delete existing during force:",
-              delErr instanceof Error ? delErr.message : delErr,
+              delErr instanceof Error ? delErr.message : delErr
             );
           }
           const res = await postCreate();

@@ -10,8 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // 토스 스타일: brandSolid — 키컬러 배경, 흰 텍스트
-        default:
-          "bg-brand text-white active:bg-brand/85 disabled:bg-surface-muted disabled:text-text-disabled",
+        default: "bg-brand text-white active:bg-brand/85 disabled:bg-surface-muted disabled:text-text-disabled",
         // neutralSolid — 어두운 배경, 흰 텍스트
         neutral:
           "bg-[#2A2A2A] text-white active:bg-[#3C3C3C] disabled:bg-surface-muted disabled:text-text-disabled dark:bg-[#E0E0E0] dark:text-[#121212] dark:active:bg-[#C0C0C0]",
@@ -25,11 +24,9 @@ const buttonVariants = cva(
         outline:
           "border border-border bg-transparent text-text-primary active:bg-surface-muted/50 disabled:border-surface-muted disabled:text-text-disabled dark:border-white/8",
         // ghost — 배경/테두리 없음
-        ghost:
-          "bg-transparent text-text-primary active:bg-surface-muted/50 disabled:text-text-disabled",
+        ghost: "bg-transparent text-text-primary active:bg-surface-muted/50 disabled:text-text-disabled",
         // brandGhost — 키컬러 텍스트, 배경 없음
-        brandGhost:
-          "bg-transparent text-brand active:bg-brand/8 disabled:text-text-disabled",
+        brandGhost: "bg-transparent text-brand active:bg-brand/8 disabled:text-text-disabled",
       },
       size: {
         // 토스 기준 4단계: xsmall(32) / small(36) / medium(40) / large(52)
@@ -44,7 +41,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "md",
     },
-  },
+  }
 );
 
 function Button({
@@ -59,13 +56,7 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
+  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
 }
 
 export { Button, buttonVariants };

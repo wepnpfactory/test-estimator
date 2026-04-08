@@ -25,13 +25,7 @@ type DisplayType = "SELECT" | "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" | "CASC
 interface GroupSeed {
   name: string;
   value: string;
-  kind:
-    | "NORMAL"
-    | "SHEET_COUNT"
-    | "QUANTITY"
-    | "DIMENSIONS"
-    | "INNER_PAPER"
-    | "COVER_PAPER";
+  kind: "NORMAL" | "SHEET_COUNT" | "QUANTITY" | "DIMENSIONS" | "INNER_PAPER" | "COVER_PAPER";
   displayType?: DisplayType;
   required?: boolean;
   perSheet?: boolean;
@@ -48,7 +42,7 @@ interface GroupSeed {
 // 종이 × 평량 카테시안 시드 생성 — 각 item 에 facetA/facetB 셋업
 function paperFacetItems(
   papers: { label: string; value: string }[],
-  gsms: { label: string; value: string; thicknessMm?: number }[],
+  gsms: { label: string; value: string; thicknessMm?: number }[]
 ): ItemSeed[] {
   const out: ItemSeed[] = [];
   for (const p of papers) {
@@ -449,43 +443,42 @@ const FLAT_PRINT_GROUPS: GroupSeed[] = [
     name: "용지",
     value: "paper",
     kind: "NORMAL",
+    displayType: "CASCADE",
     required: true,
     perQuantity: true,
     perArea: true,
-    items: [
-      // 명함
-      { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
-      { label: "랑데뷰 화이트", value: "rendezvous_white" },
-      { label: "아르떼 화이트", value: "arte_white" },
-      { label: "아르떼 내추럴", value: "arte_natural" },
-      { label: "앙상블 E클래스 고백색", value: "ensemble_eclass_off" },
-      { label: "앙상블 E클래스 백색", value: "ensemble_eclass_white" },
-      { label: "인스퍼 M러프 엑스트라 화이트", value: "inspire_m_rough" },
-      { label: "스노우", value: "snow" },
-      { label: "아트", value: "art" },
-      // 포스터 추가
-      { label: "모조 미색", value: "mojo_off" },
-      { label: "모조 백색", value: "mojo_white" },
-      { label: "뉴플러스 미색", value: "newplus_off" },
-      { label: "뉴플러스 백색", value: "newplus_white" },
-    ],
-  },
-  {
-    name: "평량",
-    value: "gsm",
-    kind: "NORMAL",
-    required: true,
-    items: [
-      { label: "100g", value: "g100" },
-      { label: "120g", value: "g120" },
-      { label: "150g", value: "g150" },
-      { label: "180g", value: "g180" },
-      { label: "200g", value: "g200" },
-      { label: "230g", value: "g230" },
-      { label: "240g", value: "g240" },
-      { label: "250g", value: "g250" },
-      { label: "300g", value: "g300" },
-    ],
+    facetALabel: "종이",
+    facetBLabel: "평량",
+    items: paperFacetItems(
+      [
+        // 명함/프리미엄 고급지
+        { label: "랑데뷰 내추럴", value: "rendezvous_natural" },
+        { label: "랑데뷰 화이트", value: "rendezvous_white" },
+        { label: "아르떼 화이트", value: "arte_white" },
+        { label: "아르떼 내추럴", value: "arte_natural" },
+        { label: "앙상블 E클래스 고백색", value: "ensemble_eclass_off" },
+        { label: "앙상블 E클래스 백색", value: "ensemble_eclass_white" },
+        { label: "인스퍼 M러프 엑스트라 화이트", value: "inspire_m_rough" },
+        // 일반지
+        { label: "스노우", value: "snow" },
+        { label: "아트", value: "art" },
+        { label: "모조 미색", value: "mojo_off" },
+        { label: "모조 백색", value: "mojo_white" },
+        { label: "뉴플러스 미색", value: "newplus_off" },
+        { label: "뉴플러스 백색", value: "newplus_white" },
+      ],
+      [
+        { label: "100g", value: "g100" },
+        { label: "120g", value: "g120" },
+        { label: "150g", value: "g150" },
+        { label: "180g", value: "g180" },
+        { label: "200g", value: "g200" },
+        { label: "230g", value: "g230" },
+        { label: "240g", value: "g240" },
+        { label: "250g", value: "g250" },
+        { label: "300g", value: "g300" },
+      ]
+    ),
   },
   {
     name: "코팅",
@@ -547,10 +540,7 @@ const TEMPLATES: Record<ProductTemplate, GroupSeed[]> = {
   FLAT_PRINT: FLAT_PRINT_GROUPS,
 };
 
-export async function scaffoldProductGroups(
-  productId: string,
-  template: ProductTemplate,
-): Promise<void> {
+export async function scaffoldProductGroups(productId: string, template: ProductTemplate): Promise<void> {
   const groups = TEMPLATES[template] ?? [];
   if (groups.length === 0) return;
 

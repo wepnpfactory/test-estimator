@@ -24,10 +24,7 @@ interface ListResponse {
   categories?: RawCategory[];
 }
 
-export async function listCategories(
-  mall: Cafe24Mall,
-  shopNo?: number,
-): Promise<Cafe24Category[]> {
+export async function listCategories(mall: Cafe24Mall, shopNo?: number): Promise<Cafe24Category[]> {
   // Cafe24 categories API 는 limit 100 단위 페이지네이션 — MVP는 단일 페이지
   const res = await cafe24Fetch<ListResponse>(mall, "/api/v2/admin/categories", {
     method: "GET",

@@ -1,14 +1,14 @@
-import * as React from "react"
-import { cn } from "../ui/utils"
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
+import * as React from "react";
+import { cn } from "../ui/utils";
 
 interface InsightCardProps extends React.ComponentProps<"div"> {
-  icon?: LucideIcon
-  title: string
-  description: string
-  tags?: { label: string; icon?: LucideIcon }[]
-  action?: React.ReactNode
-  variant?: "default" | "highlighted"
+  icon?: LucideIcon;
+  title: string;
+  description: string;
+  tags?: { label: string; icon?: LucideIcon }[];
+  action?: React.ReactNode;
+  variant?: "default" | "highlighted";
 }
 
 function InsightCard({
@@ -25,26 +25,20 @@ function InsightCard({
     <div
       data-slot="insight-card"
       className={cn(
-        "mx-6 rounded-2xl p-6 shadow-[var(--shadow-card)]",
-        variant === "highlighted"
-          ? "bg-brand-tint border border-brand/20"
-          : "bg-card",
-        className,
+        "mx-6 rounded-2xl p-6 shadow-(--shadow-card)",
+        variant === "highlighted" ? "bg-brand-tint border border-brand/20" : "bg-card",
+        className
       )}
       {...props}
     >
       {Icon && (
         <div className="size-8 rounded-xl bg-brand/10 flex items-center justify-center mb-3">
-          <Icon className="size-[18px] text-brand" strokeWidth={2} />
+          <Icon className="size-4.5 text-brand" strokeWidth={2} />
         </div>
       )}
 
-      <p className="text-text-primary font-bold text-[15px] leading-tight mb-2">
-        {title}
-      </p>
-      <p className="text-text-tertiary text-[13px] leading-normal mb-4">
-        {description}
-      </p>
+      <p className="text-text-primary font-bold text-[15px] leading-tight mb-2">{title}</p>
+      <p className="text-text-tertiary text-[13px] leading-normal mb-4">{description}</p>
 
       {tags && tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -62,8 +56,8 @@ function InsightCard({
 
       {action}
     </div>
-  )
+  );
 }
 
-export { InsightCard }
-export type { InsightCardProps }
+export { InsightCard };
+export type { InsightCardProps };

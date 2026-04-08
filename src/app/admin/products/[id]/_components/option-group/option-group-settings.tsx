@@ -14,21 +14,12 @@ interface Props {
   actions: OptionGroupActions;
 }
 
-export function OptionGroupSettings({
-  productId,
-  group,
-  precedingGroups,
-  actions,
-}: Props) {
-
+export function OptionGroupSettings({ productId, group, precedingGroups, actions }: Props) {
   return (
     <details className="group rounded-md border border-border bg-surface-subtle">
       <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-xs font-medium text-text-secondary hover:text-foreground">
         <span>고급 설정 (역할 · 필수 · 노출 조건)</span>
-        <ChevronDown
-          className="size-3.5 text-text-tertiary transition-transform group-open:rotate-180"
-          aria-hidden
-        />
+        <ChevronDown className="size-3.5 text-text-tertiary transition-transform group-open:rotate-180" aria-hidden />
       </summary>
       <form
         action={actions.updateGroup.bind(null, productId, group.id)}
@@ -36,11 +27,7 @@ export function OptionGroupSettings({
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="역할 (kind)">
-            <select
-              name="kind"
-              defaultValue={group.kind}
-              className={inputFull}
-            >
+            <select name="kind" defaultValue={group.kind} className={inputFull}>
               <option value="NORMAL">일반</option>
               <option value="SHEET_COUNT">페이지수 (sheet)</option>
               <option value="QUANTITY">부수 (quantity)</option>
@@ -50,11 +37,7 @@ export function OptionGroupSettings({
             </select>
           </Field>
           <Field label="표시 타입 (displayType)">
-            <select
-              name="displayType"
-              defaultValue={group.displayType}
-              className={inputFull}
-            >
+            <select name="displayType" defaultValue={group.displayType} className={inputFull}>
               <option value="SELECT">SELECT — 드롭다운</option>
               <option value="RADIO">RADIO — 라디오 버튼</option>
               <option value="SWATCH">SWATCH — 이미지 카드</option>
@@ -67,10 +50,7 @@ export function OptionGroupSettings({
 
         {group.displayType === "CASCADE" && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field
-              label="1차 셀렉트 라벨"
-              hint="예: 종이"
-            >
+            <Field label="1차 셀렉트 라벨" hint="예: 종이">
               <input
                 name="facetALabel"
                 defaultValue={group.facetALabel ?? ""}
@@ -78,10 +58,7 @@ export function OptionGroupSettings({
                 className={inputFull}
               />
             </Field>
-            <Field
-              label="2차 셀렉트 라벨"
-              hint="예: 평량"
-            >
+            <Field label="2차 셀렉트 라벨" hint="예: 평량">
               <input
                 name="facetBLabel"
                 defaultValue={group.facetBLabel ?? ""}
@@ -92,38 +69,24 @@ export function OptionGroupSettings({
           </div>
         )}
 
-        <div
-          className={`grid grid-cols-1 gap-4 ${group.displayType === "CHECKBOX" ? "sm:grid-cols-2" : ""}`}
-        >
+        <div className={`grid grid-cols-1 gap-4 ${group.displayType === "CHECKBOX" ? "sm:grid-cols-2" : ""}`}>
           <Field label="필수 여부">
             <label className="flex h-8 items-center gap-2 text-xs text-foreground">
-              <input
-                type="checkbox"
-                name="required"
-                defaultChecked={group.required}
-                className="size-4"
-              />
+              <input type="checkbox" name="required" defaultChecked={group.required} className="size-4" />
               필수 그룹
             </label>
           </Field>
           {group.displayType === "CHECKBOX" && (
             <Field label="다중 선택">
               <label className="flex h-8 items-center gap-2 text-xs text-foreground">
-                <input
-                  type="checkbox"
-                  name="multiSelect"
-                  defaultChecked={group.multiSelect}
-                  className="size-4"
-                />
-                한 그룹에서 복수 아이템 선택 허용
+                <input type="checkbox" name="multiSelect" defaultChecked={group.multiSelect} className="size-4" />한
+                그룹에서 복수 아이템 선택 허용
               </label>
             </Field>
           )}
         </div>
 
-        {(group.kind === "NORMAL" ||
-          group.kind === "INNER_PAPER" ||
-          group.kind === "COVER_PAPER") && (
+        {(group.kind === "NORMAL" || group.kind === "INNER_PAPER" || group.kind === "COVER_PAPER") && (
           <>
             <Field label="곱셈 옵션">
               <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -156,7 +119,6 @@ export function OptionGroupSettings({
                 />
               </div>
             </Field>
-
           </>
         )}
 
@@ -185,21 +147,14 @@ export function OptionGroupSettings({
                 />
               </div>
               <p className="text-[11px] text-text-tertiary">
-                옵션 아이템에 minRange/maxRange 를 정의하면 입력값에 따라 자동
-                매칭됩니다.
+                옵션 아이템에 minRange/maxRange 를 정의하면 입력값에 따라 자동 매칭됩니다.
               </p>
             </div>
           </Field>
         )}
 
-        <Field
-          label="보이는 조건"
-          hint="선행 옵션의 특정 값이 선택됐을 때만 이 그룹을 노출합니다. 비우면 항상 노출."
-        >
-          <GroupShowWhenPicker
-            currentShowWhen={group.showWhen}
-            precedingGroups={precedingGroups}
-          />
+        <Field label="보이는 조건" hint="선행 옵션의 특정 값이 선택됐을 때만 이 그룹을 노출합니다. 비우면 항상 노출.">
+          <GroupShowWhenPicker currentShowWhen={group.showWhen} precedingGroups={precedingGroups} />
         </Field>
 
         {group.kind === "DIMENSIONS" && (
@@ -235,23 +190,10 @@ export function OptionGroupSettings({
   );
 }
 
-function CheckboxLabel({
-  name,
-  defaultChecked,
-  label,
-}: {
-  name: string;
-  defaultChecked: boolean;
-  label: ReactNode;
-}) {
+function CheckboxLabel({ name, defaultChecked, label }: { name: string; defaultChecked: boolean; label: ReactNode }) {
   return (
     <label className="flex items-center gap-2 text-xs text-foreground">
-      <input
-        type="checkbox"
-        name={name}
-        defaultChecked={defaultChecked}
-        className="size-4"
-      />
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="size-4" />
       {label}
     </label>
   );

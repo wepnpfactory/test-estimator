@@ -31,12 +31,7 @@ function subscribeLocalStorage(callback: () => void): () => void {
  * useSyncExternalStore 로 localStorage 와 동기화 — effect/cascade 없음.
  * SSR 시에는 defaultOpen, 클라이언트 mount 후 자동으로 저장값으로 전환된다.
  */
-export function CollapsibleSection({
-  storageKey,
-  defaultOpen = true,
-  summary,
-  children,
-}: CollapsibleSectionProps) {
+export function CollapsibleSection({ storageKey, defaultOpen = true, summary, children }: CollapsibleSectionProps) {
   const getSnapshot = useCallback((): boolean => {
     try {
       const saved = window.localStorage.getItem(storageKey);
@@ -46,16 +41,9 @@ export function CollapsibleSection({
   }, [storageKey, defaultOpen]);
 
   // SSR snapshot — 서버에선 기본값만 안다
-  const getServerSnapshot = useCallback(
-    (): boolean => defaultOpen,
-    [defaultOpen],
-  );
+  const getServerSnapshot = useCallback((): boolean => defaultOpen, [defaultOpen]);
 
-  const open = useSyncExternalStore(
-    subscribeLocalStorage,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const open = useSyncExternalStore(subscribeLocalStorage, getSnapshot, getServerSnapshot);
 
   const setOpen = useCallback(
     (next: boolean | ((prev: boolean) => boolean)) => {
@@ -66,7 +54,7 @@ export function CollapsibleSection({
         window.dispatchEvent(new Event("te:localstorage"));
       } catch {}
     },
-    [open, storageKey],
+    [open, storageKey]
   );
 
   return (
@@ -78,9 +66,7 @@ export function CollapsibleSection({
         className="group flex w-full items-center gap-2 rounded-md px-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ChevronDown
-          className={`size-4 text-text-tertiary transition-transform duration-150 ${
-            open ? "" : "-rotate-90"
-          }`}
+          className={`size-4 text-text-tertiary transition-transform duration-150 ${open ? "" : "-rotate-90"}`}
           aria-hidden="true"
         />
         <div className="flex-1">{summary}</div>

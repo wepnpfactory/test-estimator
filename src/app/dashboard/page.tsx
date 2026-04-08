@@ -1,14 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Activity,
-  ArrowUpRight,
-  BarChart3,
-  CreditCard,
-  DollarSign,
-  UserPlus,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { Activity, ArrowUpRight, BarChart3, CreditCard, DollarSign, UserPlus, Users, Wallet } from "lucide-react";
 
 import { EmptyState } from "@/components/patterns/empty-state";
 import { HeroCard } from "@/components/patterns/hero-card";
@@ -103,9 +94,7 @@ export default function DashboardPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
-            <p className="text-[12px] font-medium uppercase tracking-[0.05em] text-text-secondary">
-              Overview
-            </p>
+            <p className="text-[12px] font-medium uppercase tracking-[0.05em] text-text-secondary">Overview</p>
             <h1 className="mt-1.5 text-[24px] font-bold leading-snug tracking-[-0.01em] text-text-primary">
               Dashboard
             </h1>
@@ -115,10 +104,7 @@ export default function DashboardPage() {
             role="status"
             aria-live="polite"
           >
-            <span
-              className="size-1.5 rounded-full bg-brand"
-              aria-hidden="true"
-            />
+            <span className="size-1.5 rounded-full bg-brand" aria-hidden="true" />
             <span className="sr-only">Data status:</span>
             <span className="text-[11px] font-bold uppercase tracking-[0.05em] text-brand">
               Live · updated just now
@@ -147,14 +133,7 @@ export default function DashboardPage() {
           {/* KPI grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((s) => (
-              <StatCard
-                key={s.label}
-                icon={s.icon}
-                label={s.label}
-                value={s.value}
-                unit={s.unit}
-                trend={s.trend}
-              />
+              <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} unit={s.unit} trend={s.trend} />
             ))}
           </div>
 
@@ -181,9 +160,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="mt-1.5 text-[18px] font-bold leading-none tracking-[-0.01em] text-text-primary">
                         {item.value}
-                        <span className="ms-0.5 text-[10px] font-medium text-text-tertiary">
-                          /mo
-                        </span>
+                        <span className="ms-0.5 text-[10px] font-medium text-text-tertiary">/mo</span>
                       </p>
                     </div>
                   ))}
@@ -201,10 +178,7 @@ export default function DashboardPage() {
             <SectionCard className="mx-0" title="Top Customers">
               <ol className="space-y-3">
                 {topCustomers.map((c, i) => (
-                  <li
-                    key={c.name}
-                    className="flex items-center justify-between"
-                  >
+                  <li key={c.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span
                         className="flex size-6 items-center justify-center rounded-md bg-surface-muted text-[11px] font-bold text-text-secondary"
@@ -217,9 +191,7 @@ export default function DashboardPage() {
                           <span className="sr-only">Rank {i + 1}: </span>
                           {c.name}
                         </p>
-                        <p className="text-[11px] font-medium text-text-tertiary">
-                          {c.plan}
-                        </p>
+                        <p className="text-[11px] font-medium text-text-tertiary">{c.plan}</p>
                       </div>
                     </div>
                     <p className="text-[17px] font-bold leading-none text-text-primary">
@@ -242,11 +214,7 @@ export default function DashboardPage() {
                 className={`inline-flex min-h-11 items-center gap-1 rounded-md px-3 text-[12px] font-bold text-brand transition-colors hover:text-brand/80 ${FOCUS_RING}`}
               >
                 View all
-                <ArrowUpRight
-                  className="size-3.5"
-                  strokeWidth={2.5}
-                  aria-hidden="true"
-                />
+                <ArrowUpRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
               </a>
             }
           >
@@ -256,20 +224,12 @@ export default function DashboardPage() {
                   key={a.title}
                   leading={
                     <div className="flex size-9 items-center justify-center rounded-xl bg-brand/10">
-                      <Activity
-                        className="size-4 text-brand"
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      />
+                      <Activity className="size-4 text-brand" strokeWidth={2} aria-hidden="true" />
                     </div>
                   }
                   title={a.title}
                   status={a.status}
-                  trailing={
-                    <span className="text-[14px] font-bold text-text-primary">
-                      {a.trailing}
-                    </span>
-                  }
+                  trailing={<span className="text-[14px] font-bold text-text-primary">{a.trailing}</span>}
                 />
               ))}
             </div>

@@ -61,14 +61,7 @@ export default async function OrdersPage() {
             </label>
             <label className="block">
               <span className="mb-1 block text-xs text-zinc-500">최근 N일</span>
-              <input
-                type="number"
-                name="days"
-                defaultValue={7}
-                min={1}
-                max={30}
-                className={inputCls + " w-24"}
-              />
+              <input type="number" name="days" defaultValue={7} min={1} max={30} className={inputCls + " w-24"} />
             </label>
             <button className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900">
               지금 동기화
@@ -105,9 +98,7 @@ export default async function OrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                     {d.sourceProduct.name}
-                    <div className="text-[11px] text-zinc-400">
-                      #{d.cafe24ProductNo ?? "—"}
-                    </div>
+                    <div className="text-[11px] text-zinc-400">#{d.cafe24ProductNo ?? "—"}</div>
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
                     {d.finalPrice.toLocaleString()}원
@@ -116,9 +107,7 @@ export default async function OrdersPage() {
                     {d.customerName || d.customerEmail || d.customerId || "—"}
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                    {d.designNo && (
-                      <div className="font-mono text-[11px]">{d.designNo}</div>
-                    )}
+                    {d.designNo && <div className="font-mono text-[11px]">{d.designNo}</div>}
                     {d.fileUrl && (
                       <a
                         href={d.fileUrl}
@@ -147,25 +136,21 @@ export default async function OrdersPage() {
   );
 }
 
-const inputCls =
-  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
+const inputCls = "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     CREATED: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
     IN_CART: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
-    ORDERED:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
-    DEACTIVATED:
-      "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    ORDERED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+    DEACTIVATED: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
     EXPIRED: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
     FAILED: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
   };
   return (
     <span
       className={
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium " +
-        (map[status] || map.CREATED)
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium " + (map[status] || map.CREATED)
       }
     >
       {status}

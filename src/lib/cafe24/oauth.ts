@@ -23,9 +23,7 @@ export function authorizeUrl(params: {
   state: string;
   scope?: readonly string[];
 }) {
-  const u = new URL(
-    `https://${params.mallId}.cafe24api.com/api/v2/oauth/authorize`,
-  );
+  const u = new URL(`https://${params.mallId}.cafe24api.com/api/v2/oauth/authorize`);
   u.searchParams.set("response_type", "code");
   u.searchParams.set("client_id", params.clientId);
   u.searchParams.set("state", params.state);
@@ -55,9 +53,7 @@ export async function exchangeCodeForToken(params: {
   code: string;
 }): Promise<Cafe24TokenResponse> {
   const url = `https://${params.mallId}.cafe24api.com/api/v2/oauth/token`;
-  const basic = Buffer.from(
-    `${params.clientId}:${params.clientSecret}`,
-  ).toString("base64");
+  const basic = Buffer.from(`${params.clientId}:${params.clientSecret}`).toString("base64");
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -69,7 +65,7 @@ export async function exchangeCodeForToken(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basic}`,
+      "Authorization": `Basic ${basic}`,
     },
     body,
     cache: "no-store",
@@ -89,9 +85,7 @@ export async function refreshAccessToken(params: {
   refreshToken: string;
 }): Promise<Cafe24TokenResponse> {
   const url = `https://${params.mallId}.cafe24api.com/api/v2/oauth/token`;
-  const basic = Buffer.from(
-    `${params.clientId}:${params.clientSecret}`,
-  ).toString("base64");
+  const basic = Buffer.from(`${params.clientId}:${params.clientSecret}`).toString("base64");
 
   const body = new URLSearchParams({
     grant_type: "refresh_token",
@@ -102,7 +96,7 @@ export async function refreshAccessToken(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basic}`,
+      "Authorization": `Basic ${basic}`,
     },
     body,
     cache: "no-store",

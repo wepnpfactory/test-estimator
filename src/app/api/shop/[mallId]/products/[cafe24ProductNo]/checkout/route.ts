@@ -21,7 +21,7 @@ const Body = z.object({
         directValue: z.number().int().min(0).max(1_000_000).optional(),
         widthMm: z.number().int().min(0).max(10_000).optional(),
         heightMm: z.number().int().min(0).max(10_000).optional(),
-      }),
+      })
     )
     .max(50),
   customer: z
@@ -48,9 +48,7 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(
   req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> },
+  { params }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> }
 ) {
   const origin = req.headers.get("origin");
   const { mallId, cafe24ProductNo } = await params;
@@ -64,11 +62,7 @@ export async function POST(
   try {
     parsed = Body.parse(await req.json());
   } catch (e) {
-    return withCors(
-      { error: "invalid body", detail: e instanceof Error ? e.message : null },
-      origin,
-      { status: 400 },
-    );
+    return withCors({ error: "invalid body", detail: e instanceof Error ? e.message : null }, origin, { status: 400 });
   }
 
   const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
@@ -97,16 +91,10 @@ export async function POST(
     });
   }
   if (quote.finalPrice < 0) {
-    return withCors(
-      { error: "finalPrice negative", quote },
-      origin,
-      { status: 422 },
-    );
+    return withCors({ error: "finalPrice negative", quote }, origin, { status: 422 });
   }
 
-  const summary = quote.resolvedItems
-    .map((r) => `${r.groupName}: ${r.label}`)
-    .join(" / ");
+  const summary = quote.resolvedItems.map((r) => `${r.groupName}: ${r.label}`).join(" / ");
 
   // 1) DynamicProduct row 선기록
   const dyn = await prisma.dynamicProduct.create({
@@ -122,9 +110,7 @@ export async function POST(
       fileUrl: parsed.file?.url,
       fileName: parsed.file?.name,
       status: "CREATED",
-      expiresAt: new Date(
-        Date.now() + DYNAMIC_PRODUCT_TTL_MINUTES * 60 * 1000,
-      ),
+      expiresAt: new Date(Date.now() + DYNAMIC_PRODUCT_TTL_MINUTES * 60 * 1000),
     },
   });
 
@@ -153,7 +139,7 @@ export async function POST(
         detail: err instanceof Error ? err.message : String(err),
       },
       origin,
-      { status: 502 },
+      { status: 502 }
     );
   }
 
@@ -173,10 +159,7 @@ export async function POST(
       try {
         await deleteDynamicProduct(mall, createdProductNo);
       } catch (cleanupErr) {
-        console.error(
-          "[checkout] additional options + cleanup both failed",
-          cleanupErr,
-        );
+        console.error("[checkout] additional options + cleanup both failed", cleanupErr);
       }
       await prisma.dynamicProduct.update({
         where: { id: dyn.id },
@@ -188,7 +171,7 @@ export async function POST(
           detail: err instanceof Error ? err.message : String(err),
         },
         origin,
-        { status: 502 },
+        { status: 502 }
       );
     }
   }
@@ -216,13 +199,12 @@ export async function POST(
         detail: err instanceof Error ? err.message : String(err),
       },
       origin,
-      { status: 500 },
+      { status: 500 }
     );
   }
 
   // 5) 장바구니 페이로드 생성
-  const storefrontOrigin =
-    mall.storefrontOrigin || `https://${mall.mallId}.cafe24.com`;
+  const storefrontOrigin = mall.storefrontOrigin || `https://${mall.mallId}.cafe24.com`;
   const cartUrl = buildAddToCartUrl({
     storefrontOrigin,
     productNo: createdProductNo,
@@ -246,10 +228,7 @@ export async function POST(
       finalPrice: quote.finalPrice,
       cartUrl,
       cartForm: {
-        action: new URL(
-          "/exec/front/order/basket.html",
-          storefrontOrigin,
-        ).toString(),
+        action: new URL("/exec/front/order/basket.html", storefrontOrigin).toString(),
         method: "POST",
         fields: {
           product_no: String(createdProductNo),
@@ -259,16 +238,12 @@ export async function POST(
         },
       },
     },
-    origin,
+    origin
   );
 }
 
 function escapeText(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
-    return (
-      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[
-        c
-      ] || c
-    );
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c;
   });
 }

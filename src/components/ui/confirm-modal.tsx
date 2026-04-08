@@ -1,15 +1,15 @@
-import * as React from "react"
-import { cn } from "./utils"
+import * as React from "react";
+import { cn } from "./utils";
 
 interface ConfirmModalProps extends React.ComponentProps<"div"> {
-  isOpen: boolean
-  onConfirm: () => void
-  onCancel: () => void
-  title: string
-  message: string | string[]
-  confirmText?: string
-  cancelText?: string
-  variant?: "default" | "destructive"
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  title: string;
+  message: string | string[];
+  confirmText?: string;
+  cancelText?: string;
+  variant?: "default" | "destructive";
 }
 
 function ConfirmModal({
@@ -24,9 +24,9 @@ function ConfirmModal({
   className,
   ...props
 }: ConfirmModalProps) {
-  const messages = Array.isArray(message) ? message : [message]
+  const messages = Array.isArray(message) ? message : [message];
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div
@@ -35,19 +35,14 @@ function ConfirmModal({
       onClick={onCancel}
     >
       <div
-        className={cn(
-          "bg-card rounded-2xl p-5 mx-4 max-w-sm w-full shadow-[var(--shadow-modal)]",
-          className,
-        )}
+        className={cn("bg-card rounded-2xl p-5 mx-4 max-w-sm w-full shadow-(--shadow-modal)", className)}
         onClick={(e) => e.stopPropagation()}
         {...props}
       >
         <div className="flex flex-col gap-5 items-center text-center">
           {/* Content */}
           <div className="flex flex-col gap-2 items-center w-full">
-            <h3 className="text-text-primary text-[16px] font-semibold leading-tight tracking-[-0.01em]">
-              {title}
-            </h3>
+            <h3 className="text-text-primary text-[16px] font-semibold leading-tight tracking-[-0.01em]">{title}</h3>
             <div className="text-text-secondary text-[14px] leading-normal">
               {messages.map((line, i) => (
                 <p key={i}>{line}</p>
@@ -67,7 +62,7 @@ function ConfirmModal({
               onClick={onConfirm}
               className={cn(
                 "flex-1 h-11 rounded-full text-[16px] font-semibold text-white active:opacity-85 transition-colors duration-150",
-                variant === "destructive" ? "bg-destructive" : "bg-brand",
+                variant === "destructive" ? "bg-destructive" : "bg-brand"
               )}
             >
               {confirmText}
@@ -76,8 +71,8 @@ function ConfirmModal({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export { ConfirmModal }
-export type { ConfirmModalProps }
+export { ConfirmModal };
+export type { ConfirmModalProps };

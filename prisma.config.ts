@@ -12,9 +12,6 @@ export default defineConfig({
   },
   datasource: {
     // 마이그레이션은 non-pooling 연결을 써야 안정적
-    url:
-      process.env["POSTGRES_URL_NON_POOLING"] ??
-      process.env["POSTGRES_URL"] ??
-      process.env["DATABASE_URL"],
+    url: process.env["POSTGRES_URL_NON_POOLING"] ?? process.env["POSTGRES_URL"] ?? process.env["DATABASE_URL"],
   },
 });

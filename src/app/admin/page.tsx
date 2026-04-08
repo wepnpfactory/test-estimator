@@ -32,9 +32,7 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">대시보드</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          현재 연결 상태와 핵심 지표를 확인하세요.
-        </p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">현재 연결 상태와 핵심 지표를 확인하세요.</p>
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -44,19 +42,13 @@ export default async function AdminDashboard() {
             className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-shadow duration-150 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none dark:ring-1 dark:ring-white/5"
           >
             <div
-              className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${s.accent} opacity-60`}
+              className={`pointer-events-none absolute inset-0 bg-linear-to-br ${s.accent} opacity-60`}
               aria-hidden
             />
             <div className="relative">
-              <div className="text-[12px] font-medium text-zinc-500 dark:text-zinc-400">
-                {s.label}
-              </div>
-              <div className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
-                {s.value.toLocaleString()}
-              </div>
-              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-                {s.hint}
-              </div>
+              <div className="text-[12px] font-medium text-zinc-500 dark:text-zinc-400">{s.label}</div>
+              <div className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">{s.value.toLocaleString()}</div>
+              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{s.hint}</div>
             </div>
           </div>
         ))}

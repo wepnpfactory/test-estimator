@@ -7,30 +7,22 @@ const NAV = [
   {
     href: "/admin",
     label: "대시보드",
-    icon: (
-      <path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10" />
-    ),
+    icon: <path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10" />,
   },
   {
     href: "/admin/products",
     label: "상품 연결",
-    icon: (
-      <path d="M20 7L12 3 4 7v10l8 4 8-4V7zM4 7l8 4m0 0l8-4m-8 4v10" />
-    ),
+    icon: <path d="M20 7L12 3 4 7v10l8 4 8-4V7zM4 7l8 4m0 0l8-4m-8 4v10" />,
   },
   {
     href: "/admin/orders",
     label: "주문 동기화",
-    icon: (
-      <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-    ),
+    icon: <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />,
   },
   {
     href: "/admin/malls",
     label: "몰 연동",
-    icon: (
-      <path d="M3 9l9-6 9 6v11a1 1 0 01-1 1h-5v-7H10v7H5a1 1 0 01-1-1V9z" />
-    ),
+    icon: <path d="M3 9l9-6 9 6v11a1 1 0 01-1 1h-5v-7H10v7H5a1 1 0 01-1-1V9z" />,
   },
 ];
 
@@ -39,10 +31,7 @@ export function SidebarNav() {
   return (
     <nav className="flex flex-col gap-0.5 px-3 py-3 text-sm">
       {NAV.map((item) => {
-        const active =
-          item.href === "/admin"
-            ? pathname === "/admin"
-            : pathname.startsWith(item.href);
+        const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}

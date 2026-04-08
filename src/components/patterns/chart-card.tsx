@@ -1,20 +1,20 @@
-import * as React from "react"
-import { cn } from "../ui/utils"
+import * as React from "react";
+import { cn } from "../ui/utils";
 
 interface ChartStat {
-  label: string
-  value: string | number
-  unit?: string
+  label: string;
+  value: string | number;
+  unit?: string;
 }
 
 interface ChartCardProps extends React.ComponentProps<"div"> {
-  title?: string
-  headerLeft?: React.ReactNode
-  periods?: string[]
-  activePeriod?: string
-  onPeriodChange?: (period: string) => void
-  stats?: ChartStat[]
-  statsColumns?: number
+  title?: string;
+  headerLeft?: React.ReactNode;
+  periods?: string[];
+  activePeriod?: string;
+  onPeriodChange?: (period: string) => void;
+  stats?: ChartStat[];
+  statsColumns?: number;
 }
 
 function ChartCard({
@@ -32,19 +32,12 @@ function ChartCard({
   return (
     <div
       data-slot="chart-card"
-      className={cn(
-        "mx-6 bg-card rounded-2xl p-6 shadow-[var(--shadow-card)]",
-        className,
-      )}
+      className={cn("mx-6 bg-card rounded-2xl p-6 shadow-(--shadow-card)", className)}
       {...props}
     >
       <div className="flex items-center justify-between mb-6">
         <div>
-          {title && (
-            <h3 className="text-text-primary font-bold text-[18px] leading-snug">
-              {title}
-            </h3>
-          )}
+          {title && <h3 className="text-text-primary font-bold text-[18px] leading-snug">{title}</h3>}
           {headerLeft}
         </div>
 
@@ -56,9 +49,7 @@ function ChartCard({
                 onClick={() => onPeriodChange?.(period)}
                 className={cn(
                   "px-4 py-1.5 text-[11px] font-semibold rounded-full transition-all",
-                  activePeriod === period
-                    ? "bg-brand text-white shadow-sm"
-                    : "text-text-tertiary",
+                  activePeriod === period ? "bg-brand text-white shadow-sm" : "text-text-tertiary"
                 )}
               >
                 {period}
@@ -68,9 +59,7 @@ function ChartCard({
         )}
       </div>
 
-      <div className="h-40 -mx-2 mb-6">
-        {children}
-      </div>
+      <div className="h-40 -mx-2 mb-6">{children}</div>
 
       {stats && stats.length > 0 && (
         <div
@@ -82,9 +71,7 @@ function ChartCard({
         >
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-[11px] text-text-secondary mb-2 font-medium uppercase">
-                {stat.label}
-              </p>
+              <p className="text-[11px] text-text-secondary mb-2 font-medium uppercase">{stat.label}</p>
               <p className="text-text-primary font-bold text-[18px] leading-none whitespace-nowrap">
                 {stat.value}
                 {stat.unit && <span className="text-[10px] ms-0.5">{stat.unit}</span>}
@@ -94,8 +81,8 @@ function ChartCard({
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export { ChartCard }
-export type { ChartCardProps, ChartStat }
+export { ChartCard };
+export type { ChartCardProps, ChartStat };
