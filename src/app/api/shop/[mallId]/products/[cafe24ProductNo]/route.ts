@@ -85,7 +85,7 @@ export async function GET(
           minRange: i.minRange,
           maxRange: i.maxRange,
           thicknessMm: i.thicknessMm,
-          showWhen: i.showWhen ?? null,
+          disabledWhen: i.disabledWhen ?? null,
         })),
       })),
     },

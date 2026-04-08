@@ -194,7 +194,13 @@ function buildEmbedScript(apiOrigin: string): string {
       });
     }
     function isGroupVisible(g){ return isVisibleByShowWhen(g.showWhen); }
-    function isItemVisible(it){ return isVisibleByShowWhen(it.showWhen); }
+    function isItemDisabled(it){
+      var dw = it.disabledWhen;
+      if (!dw || !dw.length) return false;
+      return dw.every(function(c){
+        return state.selections[c.groupId] === c.itemId;
+      });
+    }
 
     function render(){
       if (!state.schema) return;
@@ -327,8 +333,12 @@ function buildEmbedScript(apiOrigin: string): string {
           + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
           + '<select class="te-select" data-group="' + escapeHtml(g.id) + '">'
           + '<option value="">선택해 주세요</option>'
-          + g.items.filter(isItemVisible).map(function(it){
+          + g.items.map(function(it){
+              var disabled = isItemDisabled(it);
+              // disabled 된 아이템이 현재 selection 이면 해제
+              if (disabled && state.selections[g.id] === it.id) delete state.selections[g.id];
               var sel = state.selections[g.id] === it.id ? ' selected' : '';
+              var dis = disabled ? ' disabled' : '';
               var add = '';
               var per = '';
               if (g.perSheet) per += '×장';
@@ -337,7 +347,7 @@ function buildEmbedScript(apiOrigin: string): string {
               if (it.addPrice > 0) add = ' (+' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (it.addPrice < 0) add = ' (' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (per) add = ' (' + per + ')';
-              return '<option value="' + escapeHtml(it.id) + '"' + sel + '>' + escapeHtml(it.label) + add + '</option>';
+              return '<option value="' + escapeHtml(it.id) + '"' + sel + dis + '>' + escapeHtml(it.label) + add + (disabled ? ' — 사용 불가' : '') + '</option>';
             }).join('')
           + '</select></div>';
       });
