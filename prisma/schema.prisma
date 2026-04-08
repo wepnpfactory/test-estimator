@@ -62,6 +62,8 @@ model Product {
   cafe24ProductNo Int?
   // 면적 비례 가격 계산의 기준 면적 (mm²). A4 = 210 × 297 = 62370 (디폴트)
   baseAreaMm2     Int     @default(62370)
+  // 인쇄 여백 (도련) — 편집/표지 사이즈 계산 시 양쪽으로 추가됨
+  bleedMm         Int     @default(3)
 
   status ProductStatus @default(DRAFT)
 
@@ -116,6 +118,10 @@ model OptionGroup {
   allowDirectInput Boolean @default(false)
   minDirectInput   Int?
   maxDirectInput   Int?
+  // 책자류 구분: 이 그룹이 내지/표지 종이를 의미하면 표시
+  // (책등 두께 / 표지 사이즈 자동 계산에 사용)
+  isInnerPaper     Boolean @default(false)
+  isCoverPaper     Boolean @default(false)
 
   items OptionItem[]
 
@@ -157,6 +163,8 @@ model OptionItem {
   // (예: 1~50, 51~100). minRange 이상 ~ maxRange 이하. null 이면 무한.
   minRange    Int?
   maxRange    Int?
+  // 종이 옵션의 장당 두께 (mm) — 책등·표지 사이즈 계산에 사용
+  thicknessMm Float?
   stock     Int?
   imageUrl  String?
   sortOrder Int     @default(0)
