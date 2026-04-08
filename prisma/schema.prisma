@@ -64,6 +64,8 @@ model Product {
   baseAreaMm2     Int     @default(62370)
   // 인쇄 여백 (도련) — 편집/표지 사이즈 계산 시 양쪽으로 추가됨
   bleedMm         Int     @default(3)
+  // 상품 템플릿 — 생성 시 어떤 옵션 그룹을 자동 스캐폴드할지
+  template        ProductTemplate @default(NONE)
 
   status ProductStatus @default(DRAFT)
 
@@ -85,6 +87,12 @@ enum ProductStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum ProductTemplate {
+  NONE
+  BOOKLET
+  FLAT_PRINT
 }
 
 // ─────────────────────────────────────────────
