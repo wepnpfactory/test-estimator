@@ -95,10 +95,20 @@ model OptionGroup {
   displayType OptionDisplayType @default(SELECT)
   required    Boolean           @default(true)
   sortOrder   Int               @default(0)
+  kind        OptionGroupKind   @default(NORMAL)
+  // 이 그룹이 노출되는 조건. 형식: [{ groupId, itemId }, ...] — 모두 만족(AND)해야 노출.
+  // null/빈 배열이면 항상 노출.
+  showWhen    Json?
 
   items OptionItem[]
 
   @@index([productId, sortOrder])
+}
+
+enum OptionGroupKind {
+  NORMAL
+  SHEET_COUNT // 페이지수 그룹 — 선택된 item.multiplier 가 sheet 수
+  QUANTITY    // 부수 그룹 — 선택된 item.multiplier 가 quantity
 }
 
 enum OptionDisplayType {
@@ -119,6 +129,12 @@ model OptionItem {
   label     String
   value     String
   addPrice  Int     @default(0)
+  // 부모 그룹이 SHEET_COUNT/QUANTITY 일 때 의미 — 장수/부수 값
+  multiplier  Int     @default(1)
+  // addPrice 를 sheet 수에 곱함 (예: 종이값/인쇄비)
+  perSheet    Boolean @default(false)
+  // addPrice 를 부수에 곱함 (예: 코팅비, 타공비)
+  perQuantity Boolean @default(false)
   stock     Int?
   imageUrl  String?
   sortOrder Int     @default(0)
