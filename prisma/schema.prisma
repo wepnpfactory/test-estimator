@@ -1,0 +1,171 @@
+// 가변 옵션 상품 관리 사이트 스키마
+// 고도몰 → Cafe24 이관을 위한 "동적 상품 생성형" 가변 옵션 모델
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Cafe24 몰 연동 정보
+// ─────────────────────────────────────────────
+model Cafe24Mall {
+  id             String    @id @default(cuid())
+  mallId         String    @unique // Cafe24 mall_id
+  name           String
+  clientId       String
+  clientSecret   String
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  scopes         String[]  @default([])
+  defaultCategoryNo   Int?
+  hideDynamicProducts Boolean @default(true)
+
+  products        Product[]
+  dynamicProducts DynamicProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 관리자가 등록하는 "원본 가변 옵션 상품"
+// ─────────────────────────────────────────────
+model Product {
+  id           String     @id @default(cuid())
+  mall         Cafe24Mall @relation(fields: [mallId], references: [id])
+  mallId       String
+
+  name            String
+  slug            String  @unique
+  description     String?
+  thumbnailUrl    String?
+  basePrice       Int     @default(0)
+  cafe24ProductNo Int?
+
+  status ProductStatus @default(DRAFT)
+
+  optionGroups    OptionGroup[]
+  priceRules      PriceRule[]
+  dynamicProducts DynamicProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mallId, status])
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ─────────────────────────────────────────────
+// 옵션 그룹 (예: 표지 재질, 페이지 수, 제본 방식)
+// ─────────────────────────────────────────────
+model OptionGroup {
+  id        String @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  name        String
+  displayType OptionDisplayType @default(SELECT)
+  required    Boolean           @default(true)
+  sortOrder   Int               @default(0)
+
+  items OptionItem[]
+
+  @@index([productId, sortOrder])
+}
+
+enum OptionDisplayType {
+  SELECT
+  RADIO
+  SWATCH
+  NUMBER
+}
+
+// ─────────────────────────────────────────────
+// 옵션 선택지
+// ─────────────────────────────────────────────
+model OptionItem {
+  id      String      @id @default(cuid())
+  group   OptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  label     String
+  value     String
+  addPrice  Int     @default(0)
+  stock     Int?
+  imageUrl  String?
+  sortOrder Int     @default(0)
+  enabled   Boolean @default(true)
+
+  @@unique([groupId, value])
+  @@index([groupId, sortOrder])
+}
+
+// ─────────────────────────────────────────────
+// 가격 규칙
+// ─────────────────────────────────────────────
+model PriceRule {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  name       String
+  conditions Json
+  action     PriceRuleAction
+  amount     Int
+  sortOrder  Int @default(0)
+
+  @@index([productId, sortOrder])
+}
+
+enum PriceRuleAction {
+  ADD_FIXED
+  SUBTRACT_FIXED
+  ADD_PERCENT
+  SUBTRACT_PERCENT
+  OVERRIDE
+}
+
+// ─────────────────────────────────────────────
+// 구매 시 동적으로 Cafe24에 등록되는 일회용 상품
+// ─────────────────────────────────────────────
+model DynamicProduct {
+  id              String     @id @default(cuid())
+  mall            Cafe24Mall @relation(fields: [mallId], references: [id])
+  mallId          String
+  sourceProduct   Product    @relation(fields: [sourceProductId], references: [id])
+  sourceProductId String
+
+  cafe24ProductNo   Int?
+  cafe24ProductCode String?
+
+  selectedOptions Json
+  finalPrice      Int
+
+  status    DynamicProductStatus @default(CREATED)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mallId, status])
+  @@index([expiresAt])
+}
+
+enum DynamicProductStatus {
+  CREATED
+  IN_CART
+  ORDERED
+  EXPIRED
+  FAILED
+}
