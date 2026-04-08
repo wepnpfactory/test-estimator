@@ -25,6 +25,14 @@ model Cafe24Mall {
   scopes         String[]  @default([])
   defaultCategoryNo   Int?
   hideDynamicProducts Boolean @default(true)
+  // 동적 일회용 상품 등록 시 사용할 카테고리 (없으면 무카테고리)
+  dynamicCategoryNo   Int?
+  // 고객 브라우저가 장바구니로 이동할 때 사용할 storefront origin
+  // 예: https://hitedin.cafe24.com 또는 커스텀 도메인
+  // OAuth 콜백에서 자동 세팅, 미설정 시 mallId.cafe24.com 폴백
+  storefrontOrigin    String?
+  // 멀티샵의 경우 기본 shop_no
+  defaultShopNo       Int     @default(1)
 
   products        Product[]
   dynamicProducts DynamicProduct[]
@@ -50,6 +58,8 @@ model Product {
 
   status ProductStatus @default(DRAFT)
 
+  @@unique([mallId, cafe24ProductNo])
+
   optionGroups    OptionGroup[]
   priceRules      PriceRule[]
   dynamicProducts DynamicProduct[]
@@ -59,6 +69,8 @@ model Product {
 
   @@index([mallId, status])
 }
+
+// Prisma 7: 복합 unique는 모델 본문 안에 위치해야 함 (위 정의 참고)
 
 enum ProductStatus {
   DRAFT
@@ -152,6 +164,21 @@ model DynamicProduct {
   selectedOptions Json
   finalPrice      Int
 
+  // 고객 메타 (Cafe24 회원 / 게스트)
+  customerId      String?
+  customerEmail   String?
+  customerName    String?
+
+  // 디자인·첨부 파일 (jarvis 에디터·외부 S3 결과)
+  designNo  String? // wepnpSeqno
+  fileUrl   String?
+  fileName  String?
+
+  // 주문 동기화 결과
+  cafe24OrderId    String?
+  orderedAt        DateTime?
+  rawOrderSnapshot Json?
+
   status    DynamicProductStatus @default(CREATED)
   expiresAt DateTime?
 
@@ -160,12 +187,15 @@ model DynamicProduct {
 
   @@index([mallId, status])
   @@index([expiresAt])
+  @@index([cafe24OrderId])
+  @@index([customerId])
 }
 
 enum DynamicProductStatus {
   CREATED
   IN_CART
   ORDERED
+  DEACTIVATED
   EXPIRED
   FAILED
 }
