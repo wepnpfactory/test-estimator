@@ -48,6 +48,13 @@ export function NewProductForm({ malls, action }: Props) {
     setSubmitting(true);
     try {
       await action(formData);
+    } catch (err) {
+      // Next.js redirect()는 throw 로 전파됨 — 에러 객체 digest 가 NEXT_REDIRECT 면 그대로 다시 던져 라우터가 처리하게 둔다
+      const digest = (err as { digest?: string } | null)?.digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        throw err;
+      }
+      console.error("[new-product-form] failed:", err);
     } finally {
       setSubmitting(false);
     }

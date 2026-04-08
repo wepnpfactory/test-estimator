@@ -66,9 +66,13 @@ export function OptionBulkPaste({ groupId, productId, bulkAction }: Props) {
   function submit() {
     if (items.length === 0) return;
     startTransition(async () => {
-      await bulkAction(groupId, productId, items);
-      setText("");
-      setOpen(false);
+      try {
+        await bulkAction(groupId, productId, items);
+        setText("");
+        setOpen(false);
+      } catch (err) {
+        console.error("[option-bulk-paste] failed:", err);
+      }
     });
   }
 

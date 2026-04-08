@@ -42,6 +42,12 @@ export function FacadeCreateForm({ malls, action }: Props) {
     setSubmitting(true);
     try {
       await action(formData);
+    } catch (err) {
+      const digest = (err as { digest?: string } | null)?.digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        throw err;
+      }
+      console.error("[facade-create-form] failed:", err);
     } finally {
       setSubmitting(false);
     }
