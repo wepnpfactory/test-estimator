@@ -98,3 +98,75 @@ export async function getProduct(
     return null;
   }
 }
+
+// ─────────────────────────────────────────────
+// 겉보기 상품 신규 등록 (관리자가 직접 Cafe24에 진열용 상품 생성)
+// ─────────────────────────────────────────────
+export interface CreateFacadeProductInput {
+  mall: Cafe24Mall;
+  productName: string;
+  price: number;
+  /** 진열 여부 (default T) */
+  display?: boolean;
+  /** 판매 여부 (default T) */
+  selling?: boolean;
+  summaryDescription?: string;
+  description?: string;
+  detailImageUrl?: string;
+  categoryNo?: number;
+  shopNo?: number;
+}
+
+export async function createFacadeProduct(
+  input: CreateFacadeProductInput,
+): Promise<Cafe24ProductSummary> {
+  if (!Number.isFinite(input.price) || input.price < 0) {
+    throw new Error(`invalid price: ${input.price}`);
+  }
+  if (!input.productName.trim()) {
+    throw new Error("productName is required");
+  }
+
+  const request: Record<string, unknown> = {
+    product_name: input.productName.slice(0, 250),
+    price: String(Math.floor(input.price)),
+    retail_price: "0",
+    supply_price: "0",
+    supply_price_controlled: "F",
+    display: input.display === false ? "F" : "T",
+    selling: input.selling === false ? "F" : "T",
+    has_option: "F",
+    product_condition: "N",
+    tax_type: "A",
+    member_group_list_use: "F",
+    mobile_use: "T",
+    // 명시적으로 facade 임을 표시
+    custom_product_code: `FCD-${Date.now().toString(36)}`,
+  };
+  if (input.summaryDescription) {
+    request.summary_description = input.summaryDescription;
+  }
+  if (input.description) {
+    request.description = input.description;
+  }
+  if (input.detailImageUrl) {
+    request.detail_image = input.detailImageUrl;
+  }
+  if (typeof input.categoryNo === "number" && input.categoryNo > 0) {
+    request.add_category_no = [
+      { category_no: input.categoryNo, recommend: "F", new: "T" },
+    ];
+  }
+
+  const body = {
+    shop_no: input.shopNo ?? input.mall.defaultShopNo ?? 1,
+    request,
+  };
+
+  const res = await cafe24Fetch<{ product: RawCafe24Product }>(
+    input.mall,
+    "/api/v2/admin/products",
+    { method: "POST", body },
+  );
+  return normalize(res.product);
+}
