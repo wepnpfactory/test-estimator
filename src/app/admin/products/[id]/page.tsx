@@ -420,7 +420,7 @@ export default async function EditProductPage({
                     <CollapsibleSection
                       storageKey={`optgrp:${product.id}:${g.id}`}
                       summary={summary}
-                    >{/* body */}
+                    >
                       <div className="space-y-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
                         {/* 고급 설정 (접힘 기본) */}
                         <details className="rounded-md bg-zinc-50/70 open:pb-3 dark:bg-zinc-950/40">
@@ -608,67 +608,91 @@ export default async function EditProductPage({
                                     </button>
                                   </form>
                                 </div>
-                                <form
-                                  action={updateOptionItem.bind(
-                                    null,
-                                    product.id,
-                                    it.id,
-                                  )}
-                                  className="mt-1.5 flex flex-wrap items-center gap-3 ps-7 text-[10px] text-zinc-500"
-                                >
-                                  <label className="flex items-center gap-1">
-                                    mult
-                                    <input
-                                      type="number"
-                                      name="multiplier"
-                                      defaultValue={it.multiplier}
-                                      className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
-                                    />
-                                  </label>
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="checkbox"
-                                      name="perSheet"
-                                      defaultChecked={it.perSheet}
-                                    />
-                                    ×장
-                                  </label>
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="checkbox"
-                                      name="perQuantity"
-                                      defaultChecked={it.perQuantity}
-                                    />
-                                    ×부
-                                  </label>
-                                  {g.kind === "DIMENSIONS" && (
-                                    <>
-                                      <label className="flex items-center gap-1">
-                                        W
-                                        <input
-                                          type="number"
-                                          name="widthMm"
-                                          defaultValue={it.widthMm ?? ""}
-                                          className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
-                                        />
-                                        mm
-                                      </label>
-                                      <label className="flex items-center gap-1">
-                                        H
-                                        <input
-                                          type="number"
-                                          name="heightMm"
-                                          defaultValue={it.heightMm ?? ""}
-                                          className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
-                                        />
-                                        mm
-                                      </label>
-                                    </>
-                                  )}
-                                  <button className="ms-auto rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
-                                    저장
-                                  </button>
-                                </form>
+                                {(() => {
+                                  const showMultiplier =
+                                    g.kind === "SHEET_COUNT" ||
+                                    g.kind === "QUANTITY";
+                                  const multLabel =
+                                    g.kind === "SHEET_COUNT"
+                                      ? "장수"
+                                      : g.kind === "QUANTITY"
+                                        ? "부수"
+                                        : "수량";
+                                  const showFlags = g.kind === "NORMAL";
+                                  const showDims = g.kind === "DIMENSIONS";
+                                  if (!showMultiplier && !showFlags && !showDims) {
+                                    return null;
+                                  }
+                                  return (
+                                    <form
+                                      action={updateOptionItem.bind(
+                                        null,
+                                        product.id,
+                                        it.id,
+                                      )}
+                                      className="mt-1.5 flex flex-wrap items-center gap-3 ps-7 text-[10px] text-zinc-500"
+                                    >
+                                      {showMultiplier && (
+                                        <label className="flex items-center gap-1">
+                                          {multLabel}
+                                          <input
+                                            type="number"
+                                            name="multiplier"
+                                            defaultValue={it.multiplier}
+                                            className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                          />
+                                        </label>
+                                      )}
+                                      {showFlags && (
+                                        <>
+                                          <label className="flex items-center gap-1">
+                                            <input
+                                              type="checkbox"
+                                              name="perSheet"
+                                              defaultChecked={it.perSheet}
+                                            />
+                                            장당 곱셈
+                                          </label>
+                                          <label className="flex items-center gap-1">
+                                            <input
+                                              type="checkbox"
+                                              name="perQuantity"
+                                              defaultChecked={it.perQuantity}
+                                            />
+                                            부당 곱셈
+                                          </label>
+                                        </>
+                                      )}
+                                      {showDims && (
+                                        <>
+                                          <label className="flex items-center gap-1">
+                                            가로
+                                            <input
+                                              type="number"
+                                              name="widthMm"
+                                              defaultValue={it.widthMm ?? ""}
+                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            />
+                                            mm
+                                          </label>
+                                          <label className="flex items-center gap-1">
+                                            세로
+                                            <input
+                                              type="number"
+                                              name="heightMm"
+                                              defaultValue={it.heightMm ?? ""}
+                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            />
+                                            mm
+                                          </label>
+                                        </>
+                                      )}
+                                      <button className="ms-auto rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
+                                        저장
+                                      </button>
+                                    </form>
+                                  );
+                                })()}
                               </li>
                             ))}
                           </ul>
@@ -707,6 +731,19 @@ export default async function EditProductPage({
                       </div>
                     </CollapsibleSection>
                   </div>
+
+                  <form
+                    action={deleteOptionGroup.bind(null, product.id, g.id)}
+                  >
+                    <button
+                      type="submit"
+                      aria-label="그룹 삭제"
+                      title="그룹 삭제"
+                      className="flex size-7 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                    >
+                      <X className="size-4" aria-hidden />
+                    </button>
+                  </form>
                 </div>
               </div>
             );
