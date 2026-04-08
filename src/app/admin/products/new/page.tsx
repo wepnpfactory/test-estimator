@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { NewProductForm } from "./_components/new-product-form";
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -9,7 +10,7 @@ async function createProduct(formData: FormData) {
   const cafe24ProductNo = Number(formData.get("cafe24ProductNo") || 0);
   const basePrice = Number(formData.get("basePrice") || 0);
 
-  if (!mallId || !name || !slug || !cafe24ProductNo) {
+  if (!mallId || !name || !slug || !Number.isInteger(cafe24ProductNo) || cafe24ProductNo <= 0) {
     throw new Error("필수 입력값이 누락되었습니다.");
   }
 
@@ -19,7 +20,7 @@ async function createProduct(formData: FormData) {
       name,
       slug,
       cafe24ProductNo,
-      basePrice,
+      basePrice: Math.max(0, basePrice),
       status: "DRAFT",
     },
   });
@@ -27,72 +28,39 @@ async function createProduct(formData: FormData) {
 }
 
 export default async function NewProductPage() {
-  const malls = await prisma.cafe24Mall.findMany({ orderBy: { name: "asc" } });
+  const malls = await prisma.cafe24Mall.findMany({
+    where: { accessToken: { not: null } },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, mallId: true },
+  });
 
   if (malls.length === 0) {
     return (
-      <div>
-        <h1 className="text-xl font-semibold">새 상품 연결</h1>
+      <div className="max-w-xl">
+        <h1 className="text-2xl font-semibold tracking-tight">새 상품 연결</h1>
         <p className="mt-6 text-sm text-zinc-500">
-          먼저 <a className="underline" href="/admin/malls">몰 연동</a>에서 Cafe24 몰을 등록해 주세요.
+          먼저{" "}
+          <a className="underline" href="/admin/malls">
+            몰 연동
+          </a>
+          에서 Cafe24 몰을 등록해 주세요.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl">
-      <h1 className="text-xl font-semibold">새 상품 연결</h1>
-      <form action={createProduct} className="mt-6 space-y-4">
-        <Field label="몰">
-          <select
-            name="mallId"
-            required
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            {malls.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.mallId})
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="상품명 (관리용)">
-          <input name="name" required className={inputCls} />
-        </Field>
-        <Field label="slug (URL용)">
-          <input name="slug" required className={inputCls} />
-        </Field>
-        <Field label="Cafe24 겉보기 상품번호">
-          <input
-            name="cafe24ProductNo"
-            type="number"
-            required
-            className={inputCls}
-          />
-        </Field>
-        <Field label="기본가 (원)">
-          <input name="basePrice" type="number" defaultValue={0} className={inputCls} />
-        </Field>
-        <button
-          type="submit"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
-        >
-          생성
-        </button>
-      </form>
+    <div className="max-w-2xl">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">새 상품 연결</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          쇼핑몰에 등록된 상품을 선택하면 견적 엔진(test-estimator)에 연결됩니다.
+        </p>
+      </header>
+
+      <div className="mt-6">
+        <NewProductForm malls={malls} action={createProduct} />
+      </div>
     </div>
-  );
-}
-
-const inputCls =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-      {children}
-    </label>
   );
 }
