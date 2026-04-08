@@ -17,7 +17,10 @@ const Body = z.object({
     .array(
       z.object({
         groupId: z.string().min(1).max(64),
-        itemId: z.string().min(1).max(64),
+        itemId: z.string().min(1).max(64).optional(),
+        directValue: z.number().int().min(0).max(1_000_000).optional(),
+        widthMm: z.number().int().min(0).max(10_000).optional(),
+        heightMm: z.number().int().min(0).max(10_000).optional(),
       }),
     )
     .max(50),
