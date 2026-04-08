@@ -79,7 +79,7 @@ export function NewProductForm({ malls, action }: Props) {
       </Section>
 
       <Section
-        title="② Cafe24 겉보기 상품 선택"
+        title="② Cafe24 디스플레이 상품 선택"
         hint="이미 쇼핑몰에 등록된 상품 중에서 견적 엔진을 붙일 상품을 선택합니다."
       >
         {mallId ? (

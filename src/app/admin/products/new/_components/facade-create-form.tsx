@@ -67,7 +67,7 @@ export function FacadeCreateForm({ malls, action }: Props) {
       </Section>
 
       <Section
-        title="② 새 겉보기 상품 정보"
+        title="② 새 디스플레이 상품 정보"
         hint="Cafe24에 새로 등록할 진열용 상품의 기본 정보입니다."
       >
         <Field label="상품명">

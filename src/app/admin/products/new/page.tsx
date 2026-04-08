@@ -145,7 +145,7 @@ export default async function NewProductPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">새 상품 연결</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          쇼핑몰에 등록된 상품을 선택하거나, 새 겉보기 상품을 직접 만들어 견적 엔진에 연결합니다.
+          쇼핑몰에 등록된 상품을 선택하거나, 새 디스플레이 상품을 직접 만들어 견적 엔진에 연결합니다.
         </p>
       </header>
 

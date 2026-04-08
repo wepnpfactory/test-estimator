@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 }
 
 function buildEmbedScript(apiOrigin: string): string {
-  return `(function(){
+  return /* js */ `(function(){
   var API = ${JSON.stringify(apiOrigin)};
   var script = document.currentScript;
   if (!script) { console.warn('[test-estimator] document.currentScript not available'); return; }

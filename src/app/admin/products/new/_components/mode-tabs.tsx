@@ -34,7 +34,7 @@ export function ModeTabs({ link, create }: Props) {
               : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400")
           }
         >
-          새 겉보기 상품 만들기
+          새 디스플레이 상품 만들기
         </button>
       </div>
       <div>{mode === "link" ? link : create}</div>

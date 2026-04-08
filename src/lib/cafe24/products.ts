@@ -100,7 +100,7 @@ export async function getProduct(
 }
 
 // ─────────────────────────────────────────────
-// 겉보기 상품 신규 등록 (관리자가 직접 Cafe24에 진열용 상품 생성)
+// 디스플레이 상품 신규 등록 (관리자가 직접 Cafe24에 진열용 상품 생성)
 // ─────────────────────────────────────────────
 export interface CreateFacadeProductInput {
   mall: Cafe24Mall;
