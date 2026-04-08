@@ -55,6 +55,18 @@ async function bulkAddOptionItems(
   revalidatePath(`/admin/products/${productId}`);
 }
 
+async function deleteOptionGroup(productId: string, groupId: string) {
+  "use server";
+  await prisma.optionGroup.delete({ where: { id: groupId } });
+  revalidatePath(`/admin/products/${productId}`);
+}
+
+async function deleteOptionItem(productId: string, itemId: string) {
+  "use server";
+  await prisma.optionItem.delete({ where: { id: itemId } });
+  revalidatePath(`/admin/products/${productId}`);
+}
+
 async function publishProduct(productId: string) {
   "use server";
   await prisma.product.update({
@@ -109,21 +121,40 @@ export default async function EditProductPage({
               key={g.id}
               className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              <div className="text-sm font-medium">{g.name}</div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">{g.name}</div>
+                <form action={deleteOptionGroup.bind(null, product.id, g.id)}>
+                  <button
+                    type="submit"
+                    className="text-[11px] text-rose-600 hover:underline"
+                  >
+                    그룹 삭제
+                  </button>
+                </form>
+              </div>
               <ul className="mt-2 space-y-1 text-sm">
                 {g.items.map((it) => (
                   <li
                     key={it.id}
-                    className="flex justify-between text-zinc-600 dark:text-zinc-400"
+                    className="flex items-center justify-between gap-3 text-zinc-600 dark:text-zinc-400"
                   >
-                    <span>
+                    <span className="flex-1 truncate">
                       {it.label}{" "}
                       <span className="text-zinc-400">({it.value})</span>
                     </span>
-                    <span>
+                    <span className="tabular-nums">
                       {it.addPrice >= 0 ? "+" : ""}
                       {it.addPrice.toLocaleString()}원
                     </span>
+                    <form action={deleteOptionItem.bind(null, product.id, it.id)}>
+                      <button
+                        type="submit"
+                        aria-label="삭제"
+                        className="text-zinc-400 hover:text-rose-600"
+                      >
+                        ×
+                      </button>
+                    </form>
                   </li>
                 ))}
               </ul>
