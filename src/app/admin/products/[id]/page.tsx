@@ -14,6 +14,7 @@ import {
 } from "./_components/option-group";
 import { scaffoldProductGroups } from "@/lib/product-templates";
 import type { ProductTemplate } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 type GroupKindStr =
   | "NORMAL"
@@ -24,6 +25,30 @@ type GroupKindStr =
   | "COVER_PAPER";
 
 // ─── server actions ─────────────────────────────────────────
+
+// 서버 액션 소유권 검증 헬퍼.
+// 임의 groupId/itemId 가 다른 상품의 데이터에 접근하지 못하도록 productId 와 묶어서만 조작한다.
+async function assertGroupOwned(
+  productId: string,
+  groupId: string,
+): Promise<boolean> {
+  const g = await prisma.optionGroup.findFirst({
+    where: { id: groupId, productId },
+    select: { id: true },
+  });
+  return !!g;
+}
+
+async function assertItemOwned(
+  productId: string,
+  itemId: string,
+): Promise<boolean> {
+  const i = await prisma.optionItem.findFirst({
+    where: { id: itemId, group: { productId } },
+    select: { id: true },
+  });
+  return !!i;
+}
 
 function slugifyValue(s: string): string {
   return s
@@ -58,18 +83,19 @@ async function updateOptionGroup(
   formData: FormData,
 ) {
   "use server";
+  if (!(await assertGroupOwned(productId, groupId))) return;
   const kindRaw = String(formData.get("kind") || "NORMAL") as GroupKindStr;
   const required = formData.get("required") === "on";
   const name = String(formData.get("name") || "").trim();
   const value = String(formData.get("value") || "").trim();
   const showWhenText = String(formData.get("showWhen") || "").trim();
-  let showWhen: unknown = null;
+  let showWhen: Prisma.InputJsonValue | typeof Prisma.JsonNull = Prisma.JsonNull;
   if (showWhenText) {
     try {
       const parsed = JSON.parse(showWhenText);
-      if (Array.isArray(parsed)) showWhen = parsed;
+      if (Array.isArray(parsed)) showWhen = parsed as Prisma.InputJsonValue;
     } catch {
-      // 형식 오류면 무시 (아래 try-catch 에서 silent fail)
+      // 형식 오류면 null 유지
     }
   }
   const maxWidthRaw = String(formData.get("maxWidthMm") || "").trim();
@@ -114,7 +140,7 @@ async function updateOptionGroup(
         maxDirectInput !== null && Number.isFinite(maxDirectInput)
           ? maxDirectInput
           : null,
-      showWhen: showWhen as never,
+      showWhen,
       maxWidthMm:
         maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0
           ? maxWidthMm
@@ -130,7 +156,10 @@ async function updateOptionGroup(
 
 async function deleteOptionGroup(productId: string, groupId: string) {
   "use server";
-  await prisma.optionGroup.delete({ where: { id: groupId } });
+  // 소유권 검증 + delete 를 단일 쿼리로 — deleteMany 는 매칭 0건이면 no-op.
+  await prisma.optionGroup.deleteMany({
+    where: { id: groupId, productId },
+  });
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -199,6 +228,7 @@ async function moveOptionGroup(
   direction: "up" | "down",
 ) {
   "use server";
+  if (!(await assertGroupOwned(productId, groupId))) return;
   const groups = await prisma.optionGroup.findMany({
     where: { productId },
     orderBy: { sortOrder: "asc" },
@@ -229,6 +259,7 @@ async function addOptionItem(
   formData: FormData,
 ) {
   "use server";
+  if (!(await assertGroupOwned(productId, groupId))) return;
   const label = String(formData.get("label") || "").trim();
   const value = String(formData.get("value") || "").trim();
   const addPrice = Number(formData.get("addPrice") || 0);
@@ -246,6 +277,7 @@ async function updateOptionItem(
   formData: FormData,
 ) {
   "use server";
+  if (!(await assertItemOwned(productId, itemId))) return;
   // patch 스타일 — formData 에 존재하는 key 만 업데이트, 나머지는 유지
   const data: Record<string, unknown> = {};
 
@@ -304,15 +336,24 @@ async function updateOptionItem(
   setOptInt("maxRange", { nullable: true });
   setOptFloat("thicknessMm", { positive: true });
   setOptInt("leadTimeDays", { min: 0 });
-  setOptStr("imageUrl");
+  // imageUrl 은 http(s) 만 허용 — javascript:, data:, file: 등 차단 (XSS 방지)
+  if (formData.has("imageUrl")) {
+    const raw = String(formData.get("imageUrl") ?? "").trim();
+    if (raw === "") {
+      data.imageUrl = null;
+    } else if (/^https?:\/\//i.test(raw)) {
+      data.imageUrl = raw;
+    }
+    // 그 외 스킴은 무시 — 기존 값 유지
+  }
 
   if (formData.has("disabledWhen")) {
     const raw = String(formData.get("disabledWhen") ?? "").trim();
-    let parsed: unknown = null;
+    let parsed: Prisma.InputJsonValue | typeof Prisma.JsonNull = Prisma.JsonNull;
     if (raw) {
       try {
         const p = JSON.parse(raw);
-        if (Array.isArray(p)) parsed = p;
+        if (Array.isArray(p)) parsed = p as Prisma.InputJsonValue;
       } catch {}
     }
     data.disabledWhen = parsed;
@@ -329,7 +370,9 @@ async function updateOptionItem(
 
 async function deleteOptionItem(productId: string, itemId: string) {
   "use server";
-  await prisma.optionItem.delete({ where: { id: itemId } });
+  await prisma.optionItem.deleteMany({
+    where: { id: itemId, group: { productId } },
+  });
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -340,6 +383,12 @@ async function moveOptionItem(
   direction: "up" | "down",
 ) {
   "use server";
+  if (
+    !(await assertGroupOwned(productId, groupId)) ||
+    !(await assertItemOwned(productId, itemId))
+  ) {
+    return;
+  }
   const items = await prisma.optionItem.findMany({
     where: { groupId },
     orderBy: { sortOrder: "asc" },
@@ -371,6 +420,7 @@ async function bulkAddOptionItems(
 ) {
   "use server";
   if (items.length === 0) return;
+  if (!(await assertGroupOwned(productId, groupId))) return;
   const start = await prisma.optionItem.count({ where: { groupId } });
   await prisma.optionItem.createMany({
     data: items.map((it, i) => ({
