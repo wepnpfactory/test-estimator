@@ -66,6 +66,7 @@ export async function POST(
     return withCors({ ok: false, ...quote }, origin, { status: 422 });
   }
   // 음수여도 quote 단계에서는 통과시켜 실시간 표시. checkout 에서만 거부.
+  // visibleGroupIds 도 함께 내려서 embed.js 가 동기화하게 한다.
   return withCors(
     {
       ok: true,
