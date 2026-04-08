@@ -109,6 +109,7 @@ enum OptionGroupKind {
   NORMAL
   SHEET_COUNT // 페이지수 그룹 — 선택된 item.multiplier 가 sheet 수
   QUANTITY    // 부수 그룹 — 선택된 item.multiplier 가 quantity
+  DIMENSIONS  // 사이즈 그룹 — 사용자가 가로/세로 mm 입력, 가장 작은 fit 옵션 자동 선택
 }
 
 enum OptionDisplayType {
@@ -135,6 +136,9 @@ model OptionItem {
   perSheet    Boolean @default(false)
   // addPrice 를 부수에 곱함 (예: 코팅비, 타공비)
   perQuantity Boolean @default(false)
+  // 부모 그룹이 DIMENSIONS 일 때 — 이 옵션이 커버하는 최대 사이즈 (mm)
+  widthMm     Int?
+  heightMm    Int?
   stock     Int?
   imageUrl  String?
   sortOrder Int     @default(0)
