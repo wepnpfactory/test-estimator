@@ -104,6 +104,10 @@ model OptionGroup {
   // DIMENSIONS 그룹에서 사용자가 입력 가능한 최대 가로/세로 (mm)
   maxWidthMm  Int?
   maxHeightMm Int?
+  // 이 그룹의 모든 아이템 addPrice 를 sheet 수에 곱함 (예: 종이값/인쇄비)
+  perSheet    Boolean @default(false)
+  // 이 그룹의 모든 아이템 addPrice 를 부수에 곱함 (예: 코팅비, 타공비)
+  perQuantity Boolean @default(false)
 
   items OptionItem[]
 
@@ -138,10 +142,6 @@ model OptionItem {
   addPrice  Int     @default(0)
   // 부모 그룹이 SHEET_COUNT/QUANTITY 일 때 의미 — 장수/부수 값
   multiplier  Int     @default(1)
-  // addPrice 를 sheet 수에 곱함 (예: 종이값/인쇄비)
-  perSheet    Boolean @default(false)
-  // addPrice 를 부수에 곱함 (예: 코팅비, 타공비)
-  perQuantity Boolean @default(false)
   // 부모 그룹이 DIMENSIONS 일 때 — 이 옵션이 커버하는 최대 사이즈 (mm)
   widthMm     Int?
   heightMm    Int?
