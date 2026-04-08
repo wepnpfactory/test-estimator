@@ -154,7 +154,9 @@ function buildEmbedScript(apiOrigin: string): string {
           + '<option value="">선택해 주세요</option>'
           + g.items.map(function(it){
               var sel = state.selections[g.id] === it.id ? ' selected' : '';
-              var add = it.addPrice ? ' (+' + fmtPrice(it.addPrice) + ')' : '';
+              var add = '';
+              if (it.addPrice > 0) add = ' (+' + fmtPrice(it.addPrice) + ')';
+              else if (it.addPrice < 0) add = ' (' + fmtPrice(it.addPrice) + ')';
               return '<option value="' + escapeHtml(it.id) + '"' + sel + '>' + escapeHtml(it.label) + add + '</option>';
             }).join('')
           + '</select></div>';
