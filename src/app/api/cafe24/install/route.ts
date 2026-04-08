@@ -9,6 +9,9 @@ export async function GET(req: NextRequest) {
   if (!mallId) {
     return NextResponse.json({ error: "mall_id is required" }, { status: 400 });
   }
+  if (!/^[a-z0-9_-]{1,40}$/i.test(mallId)) {
+    return NextResponse.json({ error: "invalid mall_id" }, { status: 400 });
+  }
 
   const clientId = process.env.CAFE24_CLIENT_ID;
   const redirectUri = process.env.CAFE24_REDIRECT_URI;
@@ -23,8 +26,9 @@ export async function GET(req: NextRequest) {
   const url = authorizeUrl({ mallId, clientId, redirectUri, state });
 
   const res = NextResponse.redirect(url);
-  // CSRF 방어용 state 쿠키 (콜백에서 비교)
-  res.cookies.set("cafe24_oauth_state", `${state}:${mallId}`, {
+  // mall 별로 쿠키명 분리해서 동일 브라우저로 여러 몰을 동시 설치해도 충돌하지 않게 한다.
+  // 콜백에서는 cafe24_oauth_state_<mallId> 쿠키를 읽어 검증한다.
+  res.cookies.set(`cafe24_oauth_state_${mallId}`, state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
