@@ -20,15 +20,22 @@ interface Props {
 
 export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: Props) {
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<Cafe24Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  interface Result {
+    key: string;
+    products: Cafe24Product[];
+    error: string | null;
+  }
+  const [result, setResult] = useState<Result>({ key: "", products: [], error: null });
+
+  const currentKey = `${mallDbId}::${search.trim()}`;
+  const loading = mallDbId !== "" && result.key !== currentKey;
+  const products = result.key === currentKey ? result.products : [];
+  const error = result.key === currentKey ? result.error : null;
 
   useEffect(() => {
     if (!mallDbId) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    const myKey = currentKey;
     const t = setTimeout(() => {
       const url = new URL(`/api/admin/cafe24/${mallDbId}/products`, window.location.origin);
       if (search.trim()) url.searchParams.set("search", search.trim());
@@ -37,25 +44,21 @@ export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: P
         .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
         .then(({ ok, d }) => {
           if (cancelled) return;
-          if (!ok) {
-            setError(d.error || "조회 실패");
-            setProducts([]);
-          } else {
-            setProducts(d.products || []);
-          }
+          setResult({
+            key: myKey,
+            products: ok ? d.products || [] : [],
+            error: ok ? null : d.error || "조회 실패",
+          });
         })
         .catch(() => {
-          if (!cancelled) setError("네트워크 오류");
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
+          if (!cancelled) setResult({ key: myKey, products: [], error: "네트워크 오류" });
         });
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [mallDbId, search]);
+  }, [mallDbId, search, currentKey]);
 
   return (
     <div className="space-y-3">
