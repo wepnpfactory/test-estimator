@@ -12,12 +12,14 @@ Review the file: **$ARGUMENTS**
 ## Checklist
 
 ### 1. Design Token Compliance
+
 - [ ] No hardcoded hex colors (use semantic tokens: `text-foreground`, `bg-brand`, etc.)
 - [ ] No hardcoded px spacing in Tailwind (use `p-6` not `p-[24px]`)
 - [ ] Shadows use CSS variables (`shadow-[var(--shadow-card)]`)
 - [ ] Border radius follows the scale (`rounded-md`, `rounded-lg`, `rounded-2xl`)
 
 ### 2. Component Conventions
+
 - [ ] Uses `data-slot` attribute
 - [ ] Uses `cn()` for className merging
 - [ ] Props typed with `React.ComponentProps<>`
@@ -26,6 +28,7 @@ Review the file: **$ARGUMENTS**
 - [ ] No wrapper components that only add a className
 
 ### 3. Accessibility (a11y)
+
 - [ ] Touch targets >= 44x44px for interactive elements
 - [ ] `focus-visible` styles on all interactive elements
 - [ ] Proper `aria-*` attributes where needed
@@ -35,6 +38,7 @@ Review the file: **$ARGUMENTS**
 - [ ] Form inputs have associated labels
 
 ### 4. Mobile Best Practices
+
 - [ ] No horizontal overflow
 - [ ] Touch-friendly spacing between interactive elements
 - [ ] Safe area insets handled for notched devices
@@ -42,11 +46,13 @@ Review the file: **$ARGUMENTS**
 - [ ] Scrollable containers have `-webkit-overflow-scrolling: touch`
 
 ### 5. Performance
+
 - [ ] No unnecessary re-renders (stable references, memoization where needed)
 - [ ] Images are lazy-loaded
 - [ ] Heavy components are code-split
 
 ### 6. Typography
+
 - [ ] Uses the Pretendard/Inter font stack
 - [ ] Font sizes from the 14-step scale (10-48px, see CLAUDE.md)
 - [ ] Proper font weights (400, 500, 600, 700)
@@ -57,6 +63,7 @@ Review the file: **$ARGUMENTS**
 - [ ] No `line-height: 1.5` on display/heading text (too loose)
 
 ### 7. Spacing Consistency
+
 - [ ] All spacing values are multiples of 6px (p-1.5, p-3, p-6, etc.)
 - [ ] No arbitrary spacing (p-5=20px, gap-3.5=14px are violations)
 - [ ] Uses `size-*` shorthand instead of `w-* h-*`
@@ -66,6 +73,7 @@ Review the file: **$ARGUMENTS**
 ## Output Format
 
 Provide:
+
 1. **Score**: Pass / Needs Improvement / Fail
 2. **Issues**: List each violation with file:line reference
 3. **Fixes**: Concrete code changes for each issue

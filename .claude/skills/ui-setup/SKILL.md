@@ -16,11 +16,12 @@ Walk through these steps ONE AT A TIME. After each step, wait for the user to re
 ### Step 1: App Type
 
 Ask:
+
 ```
 What type of app are you building?
 
 1. SaaS Dashboard (analytics, metrics, charts)
-2. E-commerce (products, orders, payments)  
+2. E-commerce (products, orders, payments)
 3. Fintech (transactions, portfolio, market data)
 4. Social / Content (feeds, profiles, messaging)
 5. Productivity / Internal tool
@@ -32,6 +33,7 @@ Remember the answer — it determines which page composition recipe to use (DESI
 ### Step 2: Brand Color
 
 Ask:
+
 ```
 What's your brand color?
 
@@ -45,6 +47,7 @@ What's your brand color?
 ```
 
 After they choose, update `css/theme.css`:
+
 - In `:root` block: change `--brand` to the chosen hex
 - In `.dark` block: change `--brand` to a lighter version for dark backgrounds
 
@@ -63,6 +66,7 @@ For custom hex: lighten by ~30% (increase luminance in HSL).
 ### Step 3: Design Concept (from awesome-design-md)
 
 Ask:
+
 ```
 Want to apply an existing brand's visual style?
 
@@ -79,6 +83,7 @@ Popular options from awesome-design-md:
 ```
 
 If they pick a brand (options 1-7 or 9):
+
 1. Fetch: `https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/design-md/[brand]/DESIGN.md`
    - Brand folder names: `stripe`, `linear.app`, `vercel`, `notion`, `spotify`, `supabase`, `airbnb`
 2. Read the DESIGN.md and extract: primary color, secondary colors, text colors, background colors
@@ -90,6 +95,7 @@ If they pick 8 (No thanks): skip, keep current brand color from Step 2.
 ### Step 4: Font
 
 Ask:
+
 ```
 What font do you prefer?
 
@@ -101,6 +107,7 @@ What font do you prefer?
 ```
 
 After they choose:
+
 - Update `css/fonts.css`: change the @import URL
 - Update `css/base.css`: change `font-family` in the body rule
 
@@ -115,6 +122,7 @@ Font imports:
 ### Step 5: App Name & First Page
 
 Ask:
+
 ```
 Last step! What's your app name and what should the main page show?
 
@@ -122,6 +130,7 @@ Example: "Acme — SaaS dashboard with revenue, users, and recent activity"
 ```
 
 Then:
+
 1. Read DESIGN-LANGUAGE.md Section 63 for the matching recipe (based on Step 1 app type)
 2. Generate the first page using the page composition recipe:
    - SaaS → Hero + KPI Grid + Chart + Progress + Activity List
@@ -136,6 +145,7 @@ Then:
 ### Step 6: Summary
 
 Show:
+
 ```
 Setup Complete!
 

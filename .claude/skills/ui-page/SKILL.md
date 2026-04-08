@@ -19,10 +19,11 @@ Description: $ARGUMENTS
    - `components/patterns/bottom-nav.tsx` for navigation
 
 2. Page structure template:
+
 ```tsx
-import { PageShell, PageContent } from "@/components/patterns/page-shell"
-import { TopBar, TopBarAction } from "@/components/patterns/top-bar"
-import { BottomNav } from "@/components/patterns/bottom-nav"
+import { PageShell, PageContent } from "@/components/patterns/page-shell";
+import { TopBar, TopBarAction } from "@/components/patterns/top-bar";
+import { BottomNav } from "@/components/patterns/bottom-nav";
 
 export default function PageName() {
   return (
@@ -32,12 +33,17 @@ export default function PageName() {
         subtitle={/* optional subtitle */}
         actions={/* optional action buttons */}
       />
-      <PageContent>
-        {/* Page sections with space-y-6 */}
-      </PageContent>
-      <BottomNav items={[/* nav items */]} activeIndex={0} />
+      <PageContent>{/* Page sections with space-y-6 */}</PageContent>
+      <BottomNav
+        items={
+          [
+            /* nav items */
+          ]
+        }
+        activeIndex={0}
+      />
     </PageShell>
-  )
+  );
 }
 ```
 
