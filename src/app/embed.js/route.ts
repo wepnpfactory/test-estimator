@@ -120,7 +120,13 @@ function buildEmbedScript(apiOrigin: string): string {
       '.te-btn{margin-top:12px;width:100%;padding:13px;border:0;border-radius:8px;background:#111;color:#fff;font-size:14px;font-weight:600;cursor:pointer}',
       '.te-btn:disabled{background:#a1a1aa;cursor:not-allowed}',
       '.te-error{margin-top:8px;color:#dc2626;font-size:12px}',
-      '.te-loading{padding:18px;color:#888;font-size:13px;text-align:center}'
+      '.te-loading{padding:18px;color:#888;font-size:13px;text-align:center}',
+      '.te-dim-row{display:flex;align-items:center;gap:6px}',
+      '.te-dim-input{width:80px;padding:8px;border:1px solid #d4d4d8;border-radius:6px;font-size:14px;background:#fff}',
+      '.te-dim-x{color:#888;font-size:14px}',
+      '.te-dim-unit{color:#888;font-size:12px}',
+      '.te-dim-resolved{margin-top:6px;font-size:11px;color:#666}',
+      '.te-dim-error{color:#dc2626}'
     ].join('');
     root.appendChild(style);
 
@@ -133,8 +139,37 @@ function buildEmbedScript(apiOrigin: string): string {
       + '/products/' + encodeURIComponent(ctx.productNo);
     var state = {
       schema: null, selections: {}, quote: null,
-      busy: false, error: null, memberId: ''
+      busy: false, error: null, memberId: '',
+      // DIMENSIONS 그룹별 사용자 입력: { groupId: { w, h } }
+      dims: {}
     };
+
+    function findFittingItem(g, w, h){
+      // widthMm/heightMm 가 null 이면 무제한 박스 (fallback)
+      var candidates = g.items.filter(function(it){
+        var fitW = it.widthMm == null || it.widthMm >= w;
+        var fitH = it.heightMm == null || it.heightMm >= h;
+        return fitW && fitH;
+      });
+      if (candidates.length === 0) return null;
+      // 가장 작은 fit (면적 작은 순). null 박스는 가장 큰 것으로 취급.
+      candidates.sort(function(a, b){
+        var aw = a.widthMm == null ? Infinity : a.widthMm;
+        var ah = a.heightMm == null ? Infinity : a.heightMm;
+        var bw = b.widthMm == null ? Infinity : b.widthMm;
+        var bh = b.heightMm == null ? Infinity : b.heightMm;
+        return (aw * ah) - (bw * bh);
+      });
+      return candidates[0];
+    }
+
+    function resolveDimensionsSelection(g){
+      var d = state.dims[g.id];
+      if (!d || !d.w || !d.h) return;
+      var item = findFittingItem(g, d.w, d.h);
+      if (item) state.selections[g.id] = item.id;
+      else delete state.selections[g.id];
+    }
 
     function fmtPrice(n){ return (Number(n)||0).toLocaleString('ko-KR') + '원'; }
 
@@ -164,6 +199,26 @@ function buildEmbedScript(apiOrigin: string): string {
 
       var html = '<div class="te-title">옵션 선택</div>';
       visibleGroups.forEach(function(g){
+        if (g.kind === 'DIMENSIONS') {
+          var d = state.dims[g.id] || { w: '', h: '' };
+          var resolved = (d.w && d.h) ? findFittingItem(g, Number(d.w), Number(d.h)) : null;
+          var resolvedLabel = resolved
+            ? '<div class="te-dim-resolved">→ ' + escapeHtml(resolved.label)
+                + (resolved.addPrice ? ' (' + (resolved.addPrice >= 0 ? '+' : '') + fmtPrice(resolved.addPrice) + ')' : '')
+                + '</div>'
+            : (d.w && d.h ? '<div class="te-dim-resolved te-dim-error">맞는 사이즈가 없습니다</div>' : '');
+          html += '<div class="te-row">'
+            + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
+            + '<div class="te-dim-row">'
+              + '<input type="number" min="1" placeholder="가로" data-dim="w" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.w)) + '" class="te-dim-input" />'
+              + '<span class="te-dim-x">×</span>'
+              + '<input type="number" min="1" placeholder="세로" data-dim="h" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.h)) + '" class="te-dim-input" />'
+              + '<span class="te-dim-unit">mm</span>'
+            + '</div>'
+            + resolvedLabel
+            + '</div>';
+          return;
+        }
         html += '<div class="te-row">'
           + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
           + '<select class="te-select" data-group="' + escapeHtml(g.id) + '">'
@@ -196,6 +251,20 @@ function buildEmbedScript(apiOrigin: string): string {
           var gid = sel.getAttribute('data-group');
           if (sel.value) state.selections[gid] = sel.value;
           else delete state.selections[gid];
+          requestQuote();
+        });
+      });
+      container.querySelectorAll('.te-dim-input').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var gid = inp.getAttribute('data-group');
+          var dim = inp.getAttribute('data-dim');
+          var v = Number(inp.value);
+          if (!state.dims[gid]) state.dims[gid] = { w: '', h: '' };
+          state.dims[gid][dim] = Number.isFinite(v) && v > 0 ? v : '';
+          // 그룹 찾아서 fit 해소
+          var g = (state.schema.optionGroups || []).find(function(x){ return x.id === gid; });
+          if (g) resolveDimensionsSelection(g);
+          render();
           requestQuote();
         });
       });
