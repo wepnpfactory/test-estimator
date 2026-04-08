@@ -6,6 +6,11 @@ import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { updateFacadeProductPrice } from "@/lib/cafe24/products";
 import { CollapsibleSection } from "./_components/collapsible-section";
+import {
+  buttonCls,
+  buttonGhostCls,
+  inputCls,
+} from "./_components/form-styles";
 import { BaseAreaForm } from "./_components/base-area-form";
 import { TemplatePicker } from "./_components/template-picker";
 import {
@@ -430,7 +435,7 @@ export default async function EditProductPage({
         </div>
         {product.status !== "PUBLISHED" && (
           <form action={publishProduct.bind(null, product.id)}>
-            <button className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
+            <button className="inline-flex h-8 items-center rounded-md bg-emerald-600 px-3 text-xs font-medium text-white shadow-sm hover:bg-emerald-700">
               게시
             </button>
           </form>
@@ -583,60 +588,64 @@ export default async function EditProductPage({
                               </Field>
                             </div>
 
-                            <Field label="곱셈 옵션">
-                              <div className="flex flex-wrap gap-x-5 gap-y-2">
-                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    name="perSheet"
-                                    defaultChecked={g.perSheet}
-                                    className="size-3.5"
-                                  />
-                                  <b>장수</b>에 곱함
-                                </label>
-                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    name="perQuantity"
-                                    defaultChecked={g.perQuantity}
-                                    className="size-3.5"
-                                  />
-                                  <b>부수</b>에 곱함
-                                </label>
-                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    name="perArea"
-                                    defaultChecked={g.perArea}
-                                    className="size-3.5"
-                                  />
-                                  <b>면적</b>에 곱함 (사이즈 그룹 필요)
-                                </label>
-                              </div>
-                            </Field>
+                            {g.kind === "NORMAL" && (
+                              <>
+                                <Field label="곱셈 옵션">
+                                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        name="perSheet"
+                                        defaultChecked={g.perSheet}
+                                        className="size-3.5"
+                                      />
+                                      <b>장수</b>에 곱함
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        name="perQuantity"
+                                        defaultChecked={g.perQuantity}
+                                        className="size-3.5"
+                                      />
+                                      <b>부수</b>에 곱함
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        name="perArea"
+                                        defaultChecked={g.perArea}
+                                        className="size-3.5"
+                                      />
+                                      <b>면적</b>에 곱함 (사이즈 그룹 필요)
+                                    </label>
+                                  </div>
+                                </Field>
 
-                            <Field label="용지 역할 (책자 사이즈 자동 계산)">
-                              <div className="flex gap-3">
-                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    name="isInnerPaper"
-                                    defaultChecked={g.isInnerPaper}
-                                    className="size-3.5"
-                                  />
-                                  내지 종이
-                                </label>
-                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    name="isCoverPaper"
-                                    defaultChecked={g.isCoverPaper}
-                                    className="size-3.5"
-                                  />
-                                  표지 종이
-                                </label>
-                              </div>
-                            </Field>
+                                <Field label="용지 역할 (책자 사이즈 자동 계산)">
+                                  <div className="flex gap-3">
+                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        name="isInnerPaper"
+                                        defaultChecked={g.isInnerPaper}
+                                        className="size-3.5"
+                                      />
+                                      내지 종이
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        name="isCoverPaper"
+                                        defaultChecked={g.isCoverPaper}
+                                        className="size-3.5"
+                                      />
+                                      표지 종이
+                                    </label>
+                                  </div>
+                                </Field>
+                              </>
+                            )}
 
                             {(g.kind === "SHEET_COUNT" ||
                               g.kind === "QUANTITY") && (
@@ -711,10 +720,7 @@ export default async function EditProductPage({
                             )}
 
                             <div className="flex justify-end pt-1">
-                              <button
-                                type="submit"
-                                className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white dark:bg-white dark:text-zinc-900"
-                              >
+                              <button type="submit" className={buttonCls}>
                                 설정 저장
                               </button>
                             </div>
@@ -832,7 +838,7 @@ export default async function EditProductPage({
                                         product.id,
                                         it.id,
                                       )}
-                                      className="mt-1.5 flex flex-wrap items-center gap-3 ps-7 text-[11px] text-zinc-500"
+                                      className="mt-2 flex flex-wrap items-center gap-2 ps-7 text-xs text-zinc-500"
                                     >
                                       {showMultiplier && (
                                         <label className="flex items-center gap-1">
@@ -841,7 +847,7 @@ export default async function EditProductPage({
                                             type="number"
                                             name="multiplier"
                                             defaultValue={it.multiplier}
-                                            className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            className={inputCls + " w-16 text-right"}
                                           />
                                         </label>
                                       )}
@@ -854,7 +860,7 @@ export default async function EditProductPage({
                                               name="minRange"
                                               defaultValue={it.minRange ?? ""}
                                               placeholder="min"
-                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                              className={inputCls + " w-16 text-right"}
                                             />
                                             ~
                                             <input
@@ -862,7 +868,7 @@ export default async function EditProductPage({
                                               name="maxRange"
                                               defaultValue={it.maxRange ?? ""}
                                               placeholder="max"
-                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                              className={inputCls + " w-16 text-right"}
                                             />
                                           </label>
                                         </>
@@ -875,7 +881,7 @@ export default async function EditProductPage({
                                               type="number"
                                               name="widthMm"
                                               defaultValue={it.widthMm ?? ""}
-                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                              className={inputCls + " w-16 text-right"}
                                             />
                                             mm
                                           </label>
@@ -885,7 +891,7 @@ export default async function EditProductPage({
                                               type="number"
                                               name="heightMm"
                                               defaultValue={it.heightMm ?? ""}
-                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                              className={inputCls + " w-16 text-right"}
                                             />
                                             mm
                                           </label>
@@ -900,12 +906,12 @@ export default async function EditProductPage({
                                             name="thicknessMm"
                                             defaultValue={it.thicknessMm ?? ""}
                                             placeholder="장당"
-                                            className="w-20 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            className={inputCls + " w-20 text-right"}
                                           />
                                           mm
                                         </label>
                                       )}
-                                      <button className="ms-auto rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
+                                      <button className={buttonGhostCls + " ms-auto"}>
                                         저장
                                       </button>
                                     </form>
@@ -937,9 +943,7 @@ export default async function EditProductPage({
                             placeholder="추가금액"
                             className={smallInputCls}
                           />
-                          <button className="rounded-md bg-zinc-200 px-3 text-xs font-medium dark:bg-zinc-700">
-                            추가
-                          </button>
+                          <button className={buttonGhostCls}>추가</button>
                         </form>
                         <OptionBulkPaste
                           groupId={g.id}
@@ -975,11 +979,9 @@ export default async function EditProductPage({
           <input
             name="name"
             placeholder="새 옵션 그룹 이름 (예: 표지 재질)"
-            className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className={inputCls + " flex-1"}
           />
-          <button className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900">
-            + 그룹 추가
-          </button>
+          <button className={buttonCls}>+ 그룹 추가</button>
         </form>
       </section>
     </div>
@@ -1027,5 +1029,4 @@ function Field({
   );
 }
 
-const smallInputCls =
-  "block h-8 w-full min-w-0 rounded-md border border-zinc-300 bg-white px-2 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+const smallInputCls = inputCls + " w-full";
