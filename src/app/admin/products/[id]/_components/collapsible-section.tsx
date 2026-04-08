@@ -20,16 +20,24 @@ export function CollapsibleSection({
   summary,
   children,
 }: CollapsibleSectionProps) {
+  // SSR 시 defaultOpen 으로 시작 → hydration 후 localStorage 값으로 1회 동기화.
+  // useState lazy initializer 에서 window 접근하면 hydration mismatch 가 나므로
+  // 첫 렌더는 defaultOpen 으로 두고, useEffect 에서 한 번만 보정.
   const [open, setOpen] = useState(defaultOpen);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    let next = defaultOpen;
     try {
       const saved = window.localStorage.getItem(storageKey);
-      if (saved !== null) setOpen(saved === "1");
+      if (saved !== null) next = saved === "1";
     } catch {}
+    // 변경이 있을 때만 setState — 불필요한 cascade 방지
+    setOpen((prev) => (prev === next ? prev : next));
     setHydrated(true);
-  }, [storageKey]);
+    // storageKey 가 안정적이라는 가정. 렌더 1회 보정용 effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!hydrated) return;
