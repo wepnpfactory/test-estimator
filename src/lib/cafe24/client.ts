@@ -116,7 +116,7 @@ export async function cafe24Fetch<T = unknown>(
     const headers = new Headers(options.headers);
     headers.set("Authorization", `Bearer ${token}`);
     headers.set("Content-Type", "application/json");
-    headers.set("X-Cafe24-Api-Version", "2024-06-01");
+    headers.set("X-Cafe24-Api-Version", "2026-03-01");
     return fetch(url, {
       ...options,
       headers,
