@@ -82,10 +82,15 @@ export interface InstallScriptTagInput {
   locations?: ScriptTagLocation[];
   shopNo?: number;
   /**
-   * 동일 origin 의 기존 스크립트가 있으면 모두 제거 후 새로 등록한다.
-   * (배포·도메인 변경 시 stale 항목 정리용)
+   * 동일 origin 의 stale 스크립트(다른 src)를 제거 후 등록한다.
+   * exact match 가 이미 있으면 그대로 둔다 (idempotent 자동 설치 모드).
    */
   replaceSameOrigin?: boolean;
+  /**
+   * exact match 까지 포함해서 같은 origin 의 모든 스크립트를 지우고
+   * 새로 설치한다 (수동 재설치 모드).
+   */
+  force?: boolean;
 }
 
 export interface InstallScriptTagResult {
@@ -104,18 +109,19 @@ export async function installScriptTag(
     locations = ["PRODUCT_DETAIL"],
     shopNo,
     replaceSameOrigin = true,
+    force = false,
   } = input;
   const targetOrigin = new URL(src).origin;
 
   const existing = await listScriptTags(mall, shopNo);
 
-  // 정확히 같은 src + 동일 location 조합이면 재설치 불필요
+  // exactMatch 도 제거 대상에 포함시킬지 여부
   const exactMatch = existing.find(
     (t) =>
       t.src === src &&
       locations.every((loc) => t.displayLocation.includes(loc)),
   );
-  if (exactMatch) {
+  if (exactMatch && !force) {
     return {
       installed: false,
       scriptNo: exactMatch.scriptNo,
@@ -124,23 +130,25 @@ export async function installScriptTag(
     };
   }
 
-  // 같은 origin 의 stale 스크립트 제거
+  // 같은 origin 의 스크립트 제거
+  // - replaceSameOrigin: 다른 src 만 제거 (exactMatch 는 위에서 이미 early return)
+  // - force: exactMatch 포함 모두 제거
   let removedCount = 0;
-  if (replaceSameOrigin) {
-    const stale = existing.filter((t) => {
+  if (force || replaceSameOrigin) {
+    const sameOrigin = existing.filter((t) => {
       try {
         return new URL(t.src).origin === targetOrigin;
       } catch {
         return false;
       }
     });
-    for (const t of stale) {
+    for (const t of sameOrigin) {
       try {
         await deleteScriptTag(mall, t.scriptNo, shopNo);
         removedCount++;
       } catch (e) {
         console.warn(
-          `[script-tags] failed to delete stale ${t.scriptNo}:`,
+          `[script-tags] failed to delete ${t.scriptNo}:`,
           e instanceof Error ? e.message : e,
         );
       }

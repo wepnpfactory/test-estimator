@@ -58,12 +58,13 @@ export async function POST(
     return NextResponse.json({ error: "mall not connected" }, { status: 404 });
   }
   const targetSrc = buildEmbedSrc(req);
+  // 수동 호출은 항상 강제 재설치 (있는 것을 모두 지우고 새로 등록)
   try {
     const result = await installScriptTag({
       mall,
       src: targetSrc,
       locations: ["PRODUCT_DETAIL"],
-      replaceSameOrigin: true,
+      force: true,
     });
     return NextResponse.json({ ok: true, src: targetSrc, ...result });
   } catch (e) {
