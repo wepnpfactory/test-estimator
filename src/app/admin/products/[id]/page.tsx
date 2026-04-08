@@ -64,6 +64,8 @@ async function updateOptionGroup(
   const maxHeightRaw = String(formData.get("maxHeightMm") || "").trim();
   const maxWidthMm = maxWidthRaw === "" ? null : Number(maxWidthRaw);
   const maxHeightMm = maxHeightRaw === "" ? null : Number(maxHeightRaw);
+  const perSheet = formData.get("perSheet") === "on";
+  const perQuantity = formData.get("perQuantity") === "on";
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
@@ -71,6 +73,8 @@ async function updateOptionGroup(
       ...(value ? { value } : {}),
       kind: kindRaw,
       required,
+      perSheet,
+      perQuantity,
       showWhen: showWhen as never,
       maxWidthMm:
         maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0
@@ -145,8 +149,6 @@ async function updateOptionItem(
 ) {
   "use server";
   const multiplier = Number(formData.get("multiplier") || 1);
-  const perSheet = formData.get("perSheet") === "on";
-  const perQuantity = formData.get("perQuantity") === "on";
   const widthRaw = String(formData.get("widthMm") || "").trim();
   const heightRaw = String(formData.get("heightMm") || "").trim();
   const widthMm = widthRaw === "" ? null : Number(widthRaw);
@@ -155,8 +157,6 @@ async function updateOptionItem(
     where: { id: itemId },
     data: {
       multiplier: Number.isFinite(multiplier) ? multiplier : 1,
-      perSheet,
-      perQuantity,
       widthMm:
         widthMm !== null && Number.isFinite(widthMm) && widthMm > 0
           ? widthMm
@@ -307,7 +307,7 @@ export default async function EditProductPage({
             {product.basePrice.toLocaleString()}원
           </p>
           <span
-            className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
               product.status === "PUBLISHED"
                 ? "bg-emerald-50 text-emerald-700"
                 : "bg-zinc-100 text-zinc-600"
@@ -359,11 +359,11 @@ export default async function EditProductPage({
                 </span>
                 <KindBadge kind={g.kind} />
                 {g.required && (
-                  <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
+                  <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[11px] font-medium text-rose-700">
                     필수
                   </span>
                 )}
-                <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                   {itemCount}개
                 </span>
                 <span className="ms-auto tabular-nums text-[11px] font-medium text-zinc-500">
@@ -465,6 +465,31 @@ export default async function EditProductPage({
                               />
                               <span className="text-zinc-600">필수 그룹</span>
                             </label>
+                            <div className="flex flex-col gap-1.5 pt-1 sm:col-span-3">
+                              <span className="text-zinc-500">곱셈 옵션</span>
+                              <div className="flex gap-3">
+                                <label className="flex items-center gap-1.5">
+                                  <input
+                                    type="checkbox"
+                                    name="perSheet"
+                                    defaultChecked={g.perSheet}
+                                  />
+                                  <span className="text-zinc-600">
+                                    이 그룹의 가격을 <b>장수</b>에 곱함
+                                  </span>
+                                </label>
+                                <label className="flex items-center gap-1.5">
+                                  <input
+                                    type="checkbox"
+                                    name="perQuantity"
+                                    defaultChecked={g.perQuantity}
+                                  />
+                                  <span className="text-zinc-600">
+                                    이 그룹의 가격을 <b>부수</b>에 곱함
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
                             <div className="sm:col-span-3">
                               <label className="flex flex-col gap-1">
                                 <span className="text-zinc-500">
@@ -582,14 +607,14 @@ export default async function EditProductPage({
                                   <span className="min-w-0 flex-1 truncate font-medium text-zinc-800 dark:text-zinc-100">
                                     {it.label}
                                   </span>
-                                  <span className="font-mono text-[10px] text-zinc-400">
+                                  <span className="font-mono text-[11px] text-zinc-400">
                                     {it.value}
                                   </span>
                                   <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
                                     {it.addPrice > 0 ? "+" : ""}
                                     {it.addPrice.toLocaleString()}
-                                    {it.perSheet && " ×장"}
-                                    {it.perQuantity && " ×부"}
+                                    {g.perSheet && " ×장"}
+                                    {g.perQuantity && " ×부"}
                                     원
                                   </span>
                                   <form
@@ -618,9 +643,8 @@ export default async function EditProductPage({
                                       : g.kind === "QUANTITY"
                                         ? "부수"
                                         : "수량";
-                                  const showFlags = g.kind === "NORMAL";
                                   const showDims = g.kind === "DIMENSIONS";
-                                  if (!showMultiplier && !showFlags && !showDims) {
+                                  if (!showMultiplier && !showDims) {
                                     return null;
                                   }
                                   return (
@@ -630,7 +654,7 @@ export default async function EditProductPage({
                                         product.id,
                                         it.id,
                                       )}
-                                      className="mt-1.5 flex flex-wrap items-center gap-3 ps-7 text-[10px] text-zinc-500"
+                                      className="mt-1.5 flex flex-wrap items-center gap-3 ps-7 text-[11px] text-zinc-500"
                                     >
                                       {showMultiplier && (
                                         <label className="flex items-center gap-1">
@@ -642,26 +666,6 @@ export default async function EditProductPage({
                                             className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
                                           />
                                         </label>
-                                      )}
-                                      {showFlags && (
-                                        <>
-                                          <label className="flex items-center gap-1">
-                                            <input
-                                              type="checkbox"
-                                              name="perSheet"
-                                              defaultChecked={it.perSheet}
-                                            />
-                                            장당 곱셈
-                                          </label>
-                                          <label className="flex items-center gap-1">
-                                            <input
-                                              type="checkbox"
-                                              name="perQuantity"
-                                              defaultChecked={it.perQuantity}
-                                            />
-                                            부당 곱셈
-                                          </label>
-                                        </>
                                       )}
                                       {showDims && (
                                         <>
@@ -783,7 +787,7 @@ function KindBadge({ kind }: { kind: string }) {
         ? "부수"
         : "사이즈";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${cls}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
       {label}
     </span>
   );
