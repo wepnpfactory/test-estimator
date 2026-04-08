@@ -92,6 +92,8 @@ model OptionGroup {
   productId String
 
   name        String
+  // 내부 식별용 슬러그 (영문/숫자/_-). 같은 product 안에서 unique.
+  value       String?
   displayType OptionDisplayType @default(SELECT)
   required    Boolean           @default(true)
   sortOrder   Int               @default(0)
@@ -105,6 +107,7 @@ model OptionGroup {
 
   items OptionItem[]
 
+  @@unique([productId, value])
   @@index([productId, sortOrder])
 }
 
