@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { updateFacadeProductPrice } from "@/lib/cafe24/products";
 import { CollapsibleSection } from "./_components/collapsible-section";
@@ -66,6 +68,12 @@ async function updateOptionGroup(
   const maxHeightMm = maxHeightRaw === "" ? null : Number(maxHeightRaw);
   const perSheet = formData.get("perSheet") === "on";
   const perQuantity = formData.get("perQuantity") === "on";
+  const perArea = formData.get("perArea") === "on";
+  const allowDirectInput = formData.get("allowDirectInput") === "on";
+  const minDirectRaw = String(formData.get("minDirectInput") || "").trim();
+  const maxDirectRaw = String(formData.get("maxDirectInput") || "").trim();
+  const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
+  const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
@@ -75,6 +83,16 @@ async function updateOptionGroup(
       required,
       perSheet,
       perQuantity,
+      perArea,
+      allowDirectInput,
+      minDirectInput:
+        minDirectInput !== null && Number.isFinite(minDirectInput)
+          ? minDirectInput
+          : null,
+      maxDirectInput:
+        maxDirectInput !== null && Number.isFinite(maxDirectInput)
+          ? maxDirectInput
+          : null,
       showWhen: showWhen as never,
       maxWidthMm:
         maxWidthMm !== null && Number.isFinite(maxWidthMm) && maxWidthMm > 0
@@ -153,10 +171,18 @@ async function updateOptionItem(
   const heightRaw = String(formData.get("heightMm") || "").trim();
   const widthMm = widthRaw === "" ? null : Number(widthRaw);
   const heightMm = heightRaw === "" ? null : Number(heightRaw);
+  const minRangeRaw = String(formData.get("minRange") || "").trim();
+  const maxRangeRaw = String(formData.get("maxRange") || "").trim();
+  const minRange = minRangeRaw === "" ? null : Number(minRangeRaw);
+  const maxRange = maxRangeRaw === "" ? null : Number(maxRangeRaw);
   await prisma.optionItem.update({
     where: { id: itemId },
     data: {
       multiplier: Number.isFinite(multiplier) ? multiplier : 1,
+      minRange:
+        minRange !== null && Number.isFinite(minRange) ? minRange : null,
+      maxRange:
+        maxRange !== null && Number.isFinite(maxRange) ? maxRange : null,
       widthMm:
         widthMm !== null && Number.isFinite(widthMm) && widthMm > 0
           ? widthMm
@@ -299,7 +325,14 @@ export default async function EditProductPage({
 
   return (
     <div className="max-w-4xl">
-      <div className="flex items-start justify-between gap-4">
+      <Link
+        href="/admin/products"
+        className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+      >
+        <ArrowLeft className="size-3.5" aria-hidden />
+        연동 상품 목록
+      </Link>
+      <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">{product.name}</h1>
           <p className="mt-1 text-sm text-zinc-500">
@@ -377,9 +410,9 @@ export default async function EditProductPage({
                 key={g.id}
                 className="rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] dark:border-zinc-800 dark:bg-zinc-900"
               >
-                <div className="flex items-center gap-1 px-3 py-2.5">
+                <div className="flex items-center gap-2 px-3 py-2.5">
                   {/* 순서 변경 */}
-                  <div className="flex items-center">
+                  <div className="flex flex-col gap-1.5">
                     <form
                       action={moveOptionGroup.bind(
                         null,
@@ -391,7 +424,7 @@ export default async function EditProductPage({
                       <button
                         type="submit"
                         disabled={gi === 0}
-                        className="flex size-6 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-zinc-800"
+                        className="flex h-3.5 w-5 items-center justify-center text-zinc-400 hover:text-zinc-700 disabled:pointer-events-none disabled:opacity-30"
                         aria-label="위로"
                       >
                         <ChevronUp className="size-3.5" aria-hidden />
@@ -408,7 +441,7 @@ export default async function EditProductPage({
                       <button
                         type="submit"
                         disabled={gi === groupCount - 1}
-                        className="flex size-6 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-zinc-800"
+                        className="flex h-3.5 w-5 items-center justify-center text-zinc-400 hover:text-zinc-700 disabled:pointer-events-none disabled:opacity-30"
                         aria-label="아래로"
                       >
                         <ChevronDown className="size-3.5" aria-hidden />
@@ -423,10 +456,13 @@ export default async function EditProductPage({
                     >
                       <div className="space-y-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
                         {/* 고급 설정 (접힘 기본) */}
-                        <details className="rounded-md bg-zinc-50/70 open:pb-3 dark:bg-zinc-950/40">
-                          <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[11px] font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400">
+                        <details className="group rounded-md border border-zinc-200 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-950/40">
+                          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400">
                             <span>고급 설정 (역할 · 필수 · 노출 조건)</span>
-                            <span className="text-zinc-400">＋</span>
+                            <ChevronDown
+                              className="size-3.5 text-zinc-400 transition-transform group-open:rotate-180"
+                              aria-hidden
+                            />
                           </summary>
                           <form
                             action={updateOptionGroup.bind(
@@ -434,86 +470,79 @@ export default async function EditProductPage({
                               product.id,
                               g.id,
                             )}
-                            className="grid grid-cols-1 gap-3 px-3 pt-2 text-[11px] sm:grid-cols-3"
+                            className="space-y-4 border-t border-zinc-200 px-4 py-4 dark:border-zinc-800"
                           >
-                            <label className="flex flex-col gap-1">
-                              <span className="text-zinc-500">
-                                역할 (kind)
-                              </span>
-                              <select
-                                name="kind"
-                                defaultValue={g.kind}
-                                className={smallInputCls}
-                              >
-                                <option value="NORMAL">일반</option>
-                                <option value="SHEET_COUNT">
-                                  페이지수 (sheet)
-                                </option>
-                                <option value="QUANTITY">
-                                  부수 (quantity)
-                                </option>
-                                <option value="DIMENSIONS">
-                                  사이즈 (가로×세로)
-                                </option>
-                              </select>
-                            </label>
-                            <label className="flex items-center gap-1.5 pt-4">
-                              <input
-                                type="checkbox"
-                                name="required"
-                                defaultChecked={g.required}
-                              />
-                              <span className="text-zinc-600">필수 그룹</span>
-                            </label>
-                            <div className="flex flex-col gap-1.5 pt-1 sm:col-span-3">
-                              <span className="text-zinc-500">곱셈 옵션</span>
-                              <div className="flex gap-3">
-                                <label className="flex items-center gap-1.5">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <Field label="역할 (kind)">
+                                <select
+                                  name="kind"
+                                  defaultValue={g.kind}
+                                  className={smallInputCls}
+                                >
+                                  <option value="NORMAL">일반</option>
+                                  <option value="SHEET_COUNT">
+                                    페이지수 (sheet)
+                                  </option>
+                                  <option value="QUANTITY">
+                                    부수 (quantity)
+                                  </option>
+                                  <option value="DIMENSIONS">
+                                    사이즈 (가로×세로)
+                                  </option>
+                                </select>
+                              </Field>
+                              <Field label="필수 여부">
+                                <label className="flex h-8 items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    name="required"
+                                    defaultChecked={g.required}
+                                    className="size-3.5"
+                                  />
+                                  필수 그룹
+                                </label>
+                              </Field>
+                            </div>
+
+                            <Field label="곱셈 옵션">
+                              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
                                   <input
                                     type="checkbox"
                                     name="perSheet"
                                     defaultChecked={g.perSheet}
+                                    className="size-3.5"
                                   />
-                                  <span className="text-zinc-600">
-                                    이 그룹의 가격을 <b>장수</b>에 곱함
-                                  </span>
+                                  이 그룹의 가격을 <b>장수</b>에 곱함
                                 </label>
-                                <label className="flex items-center gap-1.5">
+                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
                                   <input
                                     type="checkbox"
                                     name="perQuantity"
                                     defaultChecked={g.perQuantity}
+                                    className="size-3.5"
                                   />
-                                  <span className="text-zinc-600">
-                                    이 그룹의 가격을 <b>부수</b>에 곱함
-                                  </span>
+                                  이 그룹의 가격을 <b>부수</b>에 곱함
                                 </label>
                               </div>
-                            </div>
-                            <div className="sm:col-span-3">
-                              <label className="flex flex-col gap-1">
-                                <span className="text-zinc-500">
-                                  보이는 조건 (JSON, 없으면 항상 노출)
-                                  <span className="ms-1 text-zinc-400">
-                                    예: [
-                                    {`{"groupId":"abc","itemId":"xyz"}`}]
-                                  </span>
-                                </span>
-                                <textarea
-                                  name="showWhen"
-                                  defaultValue={showWhenStr}
-                                  rows={2}
-                                  spellCheck={false}
-                                  className={smallInputCls + " font-mono"}
-                                />
-                              </label>
-                            </div>
+                            </Field>
+
+                            <Field
+                              label="보이는 조건 (JSON)"
+                              hint={`예: [{"groupId":"abc","itemId":"xyz"}] · 비우면 항상 노출`}
+                            >
+                              <textarea
+                                name="showWhen"
+                                defaultValue={showWhenStr}
+                                rows={2}
+                                spellCheck={false}
+                                className={smallInputCls + " h-auto font-mono"}
+                              />
+                            </Field>
+
                             {g.kind === "DIMENSIONS" && (
-                              <div className="grid grid-cols-2 gap-2 sm:col-span-3">
-                                <label className="flex flex-col gap-1">
-                                  <span className="text-zinc-500">
-                                    허용 최대 가로 (mm)
-                                  </span>
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <Field label="허용 최대 가로 (mm)">
                                   <input
                                     type="number"
                                     name="maxWidthMm"
@@ -521,11 +550,8 @@ export default async function EditProductPage({
                                     placeholder="비우면 가장 큰 옵션 기준"
                                     className={smallInputCls}
                                   />
-                                </label>
-                                <label className="flex flex-col gap-1">
-                                  <span className="text-zinc-500">
-                                    허용 최대 세로 (mm)
-                                  </span>
+                                </Field>
+                                <Field label="허용 최대 세로 (mm)">
                                   <input
                                     type="number"
                                     name="maxHeightMm"
@@ -533,13 +559,14 @@ export default async function EditProductPage({
                                     placeholder="비우면 가장 큰 옵션 기준"
                                     className={smallInputCls}
                                   />
-                                </label>
+                                </Field>
                               </div>
                             )}
-                            <div className="flex justify-end gap-2 sm:col-span-3">
+
+                            <div className="flex justify-end pt-1">
                               <button
                                 type="submit"
-                                className="rounded-md bg-zinc-900 px-3 py-1 text-[11px] font-medium text-white dark:bg-white dark:text-zinc-900"
+                                className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white dark:bg-white dark:text-zinc-900"
                               >
                                 설정 저장
                               </button>
@@ -705,25 +732,25 @@ export default async function EditProductPage({
                         {/* 새 아이템 추가 */}
                         <form
                           action={addOptionItem.bind(null, g.id, product.id)}
-                          className="flex gap-2"
+                          className="grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
                         >
                           <input
                             name="label"
                             placeholder="표시명"
-                            className={smallInputCls + " flex-1"}
+                            className={smallInputCls}
                           />
                           <input
                             name="value"
                             placeholder="value"
-                            className={smallInputCls + " flex-1"}
+                            className={smallInputCls}
                           />
                           <input
                             name="addPrice"
                             type="number"
                             placeholder="추가금액"
-                            className={smallInputCls + " w-28"}
+                            className={smallInputCls}
                           />
-                          <button className="rounded-md bg-zinc-200 px-3 py-1 text-xs font-medium dark:bg-zinc-700">
+                          <button className="rounded-md bg-zinc-200 px-3 text-xs font-medium dark:bg-zinc-700">
                             추가
                           </button>
                         </form>
@@ -793,5 +820,25 @@ function KindBadge({ kind }: { kind: string }) {
   );
 }
 
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </span>
+      {children}
+      {hint && <span className="text-[11px] text-zinc-400">{hint}</span>}
+    </div>
+  );
+}
+
 const smallInputCls =
-  "rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900";
+  "block h-8 w-full min-w-0 rounded-md border border-zinc-300 bg-white px-2 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
