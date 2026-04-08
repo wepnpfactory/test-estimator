@@ -60,6 +60,8 @@ model Product {
   thumbnailUrl    String?
   basePrice       Int     @default(0)
   cafe24ProductNo Int?
+  // 면적 비례 가격 계산의 기준 면적 (mm²). A4 = 210 × 297 = 62370 (디폴트)
+  baseAreaMm2     Int     @default(62370)
 
   status ProductStatus @default(DRAFT)
 
@@ -108,6 +110,12 @@ model OptionGroup {
   perSheet    Boolean @default(false)
   // 이 그룹의 모든 아이템 addPrice 를 부수에 곱함 (예: 코팅비, 타공비)
   perQuantity Boolean @default(false)
+  // 이 그룹의 모든 아이템 addPrice 를 (선택된 사이즈 면적 / Product.baseAreaMm2) 에 곱함
+  perArea     Boolean @default(false)
+  // SHEET_COUNT / QUANTITY 그룹에서 사용자가 숫자를 직접 입력 (presets 대신)
+  allowDirectInput Boolean @default(false)
+  minDirectInput   Int?
+  maxDirectInput   Int?
 
   items OptionItem[]
 
@@ -145,10 +153,17 @@ model OptionItem {
   // 부모 그룹이 DIMENSIONS 일 때 — 이 옵션이 커버하는 최대 사이즈 (mm)
   widthMm     Int?
   heightMm    Int?
+  // SHEET_COUNT/QUANTITY 그룹이 allowDirectInput 일 때, 이 옵션이 매칭되는 구간
+  // (예: 1~50, 51~100). minRange 이상 ~ maxRange 이하. null 이면 무한.
+  minRange    Int?
+  maxRange    Int?
   stock     Int?
   imageUrl  String?
   sortOrder Int     @default(0)
   enabled   Boolean @default(true)
+  // 이 아이템이 노출되는 조건. 형식: [{ groupId, itemId }, ...] AND.
+  // 그룹 showWhen 과 별개로 같은 그룹 안에서도 일부 아이템만 보이게 가능.
+  showWhen  Json?
 
   @@unique([groupId, value])
   @@index([groupId, sortOrder])

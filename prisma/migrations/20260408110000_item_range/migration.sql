@@ -1,0 +1,3 @@
+ALTER TABLE "OptionItem"
+  ADD COLUMN "minRange" INTEGER,
+  ADD COLUMN "maxRange" INTEGER;
