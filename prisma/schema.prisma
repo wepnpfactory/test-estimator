@@ -129,6 +129,9 @@ model OptionGroup {
   maxDirectInput   Int?
   // 같은 그룹에서 여러 아이템 동시 선택 허용 (예: 후가공 코팅+에폭시+박)
   multiSelect      Boolean           @default(false)
+  // CASCADE displayType 의 1차/2차 셀렉트 라벨 (예: "종이", "평량")
+  facetALabel      String?
+  facetBLabel      String?
 
   items OptionItem[]
 
@@ -151,6 +154,7 @@ enum OptionDisplayType {
   SWATCH
   NUMBER
   CHECKBOX
+  CASCADE   // 2단 셀렉트 — item.facetA(1차) → item.facetB(2차) 형태로 노출
 }
 
 // ─────────────────────────────────────────────
@@ -182,9 +186,12 @@ model OptionItem {
   sortOrder    Int     @default(0)
   enabled      Boolean @default(true)
   // 이 아이템이 비활성(선택 불가) 되는 조건. 형식: [{ groupId, itemId }, ...] AND.
-  // 조건 매칭 시 셀렉트에서 disabled 로 표시되고 선택 불가능.
-  // (그룹 showWhen 은 opt-in 노출, 아이템 disabledWhen 은 opt-out 비활성)
   disabledWhen Json?
+  // 캐스케이드 셀렉트용 facet (예: 종이=모조, 평량=80g)
+  // 둘 다 있는 item 들은 embed.js 에서 2단 select 로 렌더됨.
+  // addPrice/thicknessMm 등 실제 가격·두께는 아이템에 그대로 보관 — 평가 로직 변경 없음.
+  facetA       String?
+  facetB       String?
 
   @@unique([groupId, value])
   @@index([groupId, sortOrder])
