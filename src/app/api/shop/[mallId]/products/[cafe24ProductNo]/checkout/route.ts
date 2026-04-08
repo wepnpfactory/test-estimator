@@ -10,6 +10,7 @@ import {
   deleteDynamicProduct,
 } from "@/lib/cafe24/dynamic-product";
 import { buildAdditionalOptionFormFields } from "@/lib/cafe24/additional-options";
+import { isOriginAllowed } from "@/lib/shop-auth";
 
 const Body = z.object({
   selections: z
@@ -70,6 +71,9 @@ export async function POST(
   const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
   if (!mall) {
     return withCors({ error: "mall not found" }, origin, { status: 404 });
+  }
+  if (!isOriginAllowed(mall, origin)) {
+    return withCors({ error: "origin not allowed" }, origin, { status: 403 });
   }
   if (!mall.accessToken) {
     return withCors({ error: "mall not connected" }, origin, { status: 503 });

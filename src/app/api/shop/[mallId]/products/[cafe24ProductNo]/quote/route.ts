@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { preflight, withCors } from "@/lib/cors";
 import { calculateQuote } from "@/lib/pricing/calculate";
+import { isOriginAllowed } from "@/lib/shop-auth";
 
 const Body = z.object({
   selections: z
@@ -47,6 +48,9 @@ export async function POST(
   const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
   if (!mall) {
     return withCors({ error: "mall not found" }, origin, { status: 404 });
+  }
+  if (!isOriginAllowed(mall, origin)) {
+    return withCors({ error: "origin not allowed" }, origin, { status: 403 });
   }
 
   const product = await prisma.product.findFirst({

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { preflight, withCors } from "@/lib/cors";
+import { isOriginAllowed } from "@/lib/shop-auth";
 
 export async function OPTIONS(req: NextRequest) {
   return preflight(req.headers.get("origin"));
@@ -24,6 +25,9 @@ export async function GET(
   const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
   if (!mall) {
     return withCors({ error: "mall not found" }, origin, { status: 404 });
+  }
+  if (!isOriginAllowed(mall, origin)) {
+    return withCors({ error: "origin not allowed" }, origin, { status: 403 });
   }
 
   const product = await prisma.product.findFirst({
