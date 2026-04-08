@@ -174,6 +174,20 @@ async function deleteOptionGroup(productId: string, groupId: string) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
+async function resetProductGroupsFromTemplate(productId: string) {
+  "use server";
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, template: true },
+  });
+  if (!product) return;
+  if (product.template === "NONE") return;
+  // 기존 그룹 전부 삭제 (아이템은 cascade), 템플릿 재시드
+  await prisma.optionGroup.deleteMany({ where: { productId } });
+  await scaffoldProductGroups(productId, product.template);
+  revalidatePath(`/admin/products/${productId}`);
+}
+
 async function updateProductTemplate(
   productId: string,
   formData: FormData,
@@ -557,6 +571,7 @@ export default async function EditProductPage({
             current={product.template ?? "NONE"}
             hasGroups={product.optionGroups.length > 0}
             action={updateProductTemplate}
+            resetAction={resetProductGroupsFromTemplate}
           />
 
           <BaseAreaForm
