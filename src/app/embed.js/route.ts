@@ -140,10 +140,12 @@ function buildEmbedScript(apiOrigin: string): string {
     var BASE_PATH = '/api/shop/' + encodeURIComponent(ctx.mallId)
       + '/products/' + encodeURIComponent(ctx.productNo);
     var state = {
-      schema: null, selections: {}, quote: null,
-      busy: false, error: null, memberId: '',
-      // DIMENSIONS 그룹별 사용자 입력: { groupId: { w, h } }
-      dims: {}
+      schema: null,
+      selections: {},   // groupId → itemId (NORMAL/select 그룹)
+      directValues: {}, // groupId → number (SHEET_COUNT/QUANTITY allowDirectInput)
+      dims: {},         // groupId → {w, h} (DIMENSIONS)
+      quote: null,
+      busy: false, error: null, memberId: ''
     };
 
     function findFittingItem(g, w, h){
@@ -181,13 +183,14 @@ function buildEmbedScript(apiOrigin: string): string {
       });
     }
 
-    function isGroupVisible(g){
-      var sw = g.showWhen;
+    function isVisibleByShowWhen(sw){
       if (!sw || !sw.length) return true;
       return sw.every(function(c){
         return state.selections[c.groupId] === c.itemId;
       });
     }
+    function isGroupVisible(g){ return isVisibleByShowWhen(g.showWhen); }
+    function isItemVisible(it){ return isVisibleByShowWhen(it.showWhen); }
 
     function render(){
       if (!state.schema) return;
@@ -201,6 +204,30 @@ function buildEmbedScript(apiOrigin: string): string {
 
       var html = '<div class="te-title">옵션 선택</div>';
       visibleGroups.forEach(function(g){
+        // SHEET_COUNT / QUANTITY 가 직접 입력 모드면 number input
+        if ((g.kind === 'SHEET_COUNT' || g.kind === 'QUANTITY') && g.allowDirectInput) {
+          var v = state.directValues[g.id] != null ? state.directValues[g.id] : '';
+          var unit = g.kind === 'SHEET_COUNT' ? '장' : '부';
+          var minA = g.minDirectInput != null ? ' min="' + g.minDirectInput + '"' : '';
+          var maxA = g.maxDirectInput != null ? ' max="' + g.maxDirectInput + '"' : '';
+          var rangeHint = '';
+          if (g.minDirectInput != null || g.maxDirectInput != null) {
+            rangeHint = '<div class="te-dim-hint">'
+              + (g.minDirectInput != null ? '최소 ' + g.minDirectInput : '')
+              + (g.minDirectInput != null && g.maxDirectInput != null ? ' · ' : '')
+              + (g.maxDirectInput != null ? '최대 ' + g.maxDirectInput : '')
+              + ' ' + unit + '</div>';
+          }
+          html += '<div class="te-row">'
+            + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
+            + '<div class="te-dim-row">'
+              + '<input type="number"' + minA + maxA + ' placeholder="' + unit + ' 수" data-direct="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(v)) + '" class="te-dim-input" style="width:140px" />'
+              + '<span class="te-dim-unit">' + unit + '</span>'
+            + '</div>'
+            + rangeHint
+            + '</div>';
+          return;
+        }
         if (g.kind === 'DIMENSIONS') {
           var d = state.dims[g.id] || { w: '', h: '' };
           // 그룹 max 와 옵션들의 max 중 큰 값을 절대 최대로 사용
@@ -253,12 +280,13 @@ function buildEmbedScript(apiOrigin: string): string {
           + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
           + '<select class="te-select" data-group="' + escapeHtml(g.id) + '">'
           + '<option value="">선택해 주세요</option>'
-          + g.items.map(function(it){
+          + g.items.filter(isItemVisible).map(function(it){
               var sel = state.selections[g.id] === it.id ? ' selected' : '';
               var add = '';
               var per = '';
               if (g.perSheet) per += '×장';
               if (g.perQuantity) per += '×부';
+              if (g.perArea) per += '×면적';
               if (it.addPrice > 0) add = ' (+' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (it.addPrice < 0) add = ' (' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (per) add = ' (' + per + ')';
@@ -284,17 +312,25 @@ function buildEmbedScript(apiOrigin: string): string {
           requestQuote();
         });
       });
-      container.querySelectorAll('.te-dim-input').forEach(function(inp){
+      container.querySelectorAll('.te-dim-input[data-group]').forEach(function(inp){
         inp.addEventListener('input', function(){
           var gid = inp.getAttribute('data-group');
           var dim = inp.getAttribute('data-dim');
           var v = Number(inp.value);
           if (!state.dims[gid]) state.dims[gid] = { w: '', h: '' };
           state.dims[gid][dim] = Number.isFinite(v) && v > 0 ? v : '';
-          // 그룹 찾아서 fit 해소
           var g = (state.schema.optionGroups || []).find(function(x){ return x.id === gid; });
           if (g) resolveDimensionsSelection(g);
           render();
+          requestQuote();
+        });
+      });
+      container.querySelectorAll('input[data-direct]').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var gid = inp.getAttribute('data-direct');
+          var v = Number(inp.value);
+          if (Number.isFinite(v) && v > 0) state.directValues[gid] = v;
+          else delete state.directValues[gid];
           requestQuote();
         });
       });
@@ -302,15 +338,43 @@ function buildEmbedScript(apiOrigin: string): string {
     }
 
     function selectionPayload(){
-      return Object.keys(state.selections).map(function(gid){
-        return { groupId: gid, itemId: state.selections[gid] };
+      var visibleGroups = (state.schema.optionGroups || []).filter(isGroupVisible);
+      var out = [];
+      visibleGroups.forEach(function(g){
+        if ((g.kind === 'SHEET_COUNT' || g.kind === 'QUANTITY') && g.allowDirectInput) {
+          var v = state.directValues[g.id];
+          if (Number.isFinite(v) && v > 0) out.push({ groupId: g.id, directValue: v });
+        } else if (g.kind === 'DIMENSIONS') {
+          var d = state.dims[g.id];
+          if (d && d.w && d.h) out.push({ groupId: g.id, widthMm: Number(d.w), heightMm: Number(d.h) });
+        } else if (state.selections[g.id]) {
+          out.push({ groupId: g.id, itemId: state.selections[g.id] });
+        }
       });
+      return out;
+    }
+
+    function isSelectionComplete(){
+      var visibleGroups = (state.schema.optionGroups || []).filter(isGroupVisible);
+      for (var i = 0; i < visibleGroups.length; i++) {
+        var g = visibleGroups[i];
+        if (!g.required) continue;
+        if ((g.kind === 'SHEET_COUNT' || g.kind === 'QUANTITY') && g.allowDirectInput) {
+          var v = state.directValues[g.id];
+          if (!Number.isFinite(v) || v <= 0) return false;
+        } else if (g.kind === 'DIMENSIONS') {
+          var d = state.dims[g.id];
+          if (!d || !d.w || !d.h) return false;
+        } else {
+          if (!state.selections[g.id]) return false;
+        }
+      }
+      return true;
     }
 
     function requestQuote(){
+      if (!isSelectionComplete()) { state.quote = null; state.error = null; render(); return; }
       var sel = selectionPayload();
-      var requiredCount = state.schema.optionGroups.filter(function(g){return g.required}).length;
-      if (sel.length < requiredCount) { state.quote = null; state.error = null; render(); return; }
       fetch(API + BASE_PATH + '/quote', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({selections: sel})
