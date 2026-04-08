@@ -329,6 +329,57 @@ function buildEmbedScript(apiOrigin: string): string {
             + '</div>';
           return;
         }
+        // CASCADE — 2단 셀렉트 (item.facetA → item.facetB)
+        if (g.displayType === 'CASCADE') {
+          var facetAs = [];
+          var seenA = {};
+          g.items.forEach(function(it){
+            if (it.facetA && !seenA[it.facetA]) { seenA[it.facetA] = 1; facetAs.push(it.facetA); }
+          });
+          // 현재 선택된 item → 현재 facetA 결정
+          var selId = state.selections[g.id];
+          var selItem = selId ? g.items.find(function(x){ return x.id === selId; }) : null;
+          // 사용자가 아직 itemId 선택 전, facetA 만 pending 상태 보관
+          if (!state.cascadeA) state.cascadeA = {};
+          var currentA = selItem ? selItem.facetA : (state.cascadeA[g.id] || '');
+          var facetBs = g.items.filter(function(it){ return it.facetA === currentA; });
+
+          var aLabel = escapeHtml(g.facetALabel || g.name);
+          var bLabel = escapeHtml(g.facetBLabel || '평량');
+          html += '<div class="te-row">'
+            + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
+            + '<div style="display:flex;gap:6px">'
+              + '<select class="te-select" data-cascade-a="' + escapeHtml(g.id) + '" aria-label="' + aLabel + '">'
+                + '<option value="">' + aLabel + ' 선택</option>'
+                + facetAs.map(function(a){
+                    var s = a === currentA ? ' selected' : '';
+                    return '<option value="' + escapeHtml(a) + '"' + s + '>' + escapeHtml(a) + '</option>';
+                  }).join('')
+              + '</select>'
+              + '<select class="te-select" data-cascade-b="' + escapeHtml(g.id) + '" aria-label="' + bLabel + '"' + (currentA ? '' : ' disabled') + '>'
+                + '<option value="">' + bLabel + ' 선택</option>'
+                + facetBs.map(function(it){
+                    var disabled = isItemDisabled(it);
+                    if (disabled && state.selections[g.id] === it.id) delete state.selections[g.id];
+                    var sel = state.selections[g.id] === it.id ? ' selected' : '';
+                    var dis = disabled ? ' disabled' : '';
+                    var add = '';
+                    var per = '';
+                    if (g.perSheet) per += '×장';
+                    if (g.perQuantity) per += '×부';
+                    if (g.perArea) per += '×면적';
+                    var labelB = it.facetB || it.label;
+                    if (it.addPrice > 0) add = ' (+' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
+                    else if (it.addPrice < 0) add = ' (' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
+                    else if (per) add = ' (' + per + ')';
+                    return '<option value="' + escapeHtml(it.id) + '"' + sel + dis + '>' + escapeHtml(labelB) + add + (disabled ? ' — 사용 불가' : '') + '</option>';
+                  }).join('')
+              + '</select>'
+            + '</div>'
+            + '</div>';
+          return;
+        }
+
         html += '<div class="te-row">'
           + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
           + '<select class="te-select" data-group="' + escapeHtml(g.id) + '">'
@@ -361,9 +412,27 @@ function buildEmbedScript(apiOrigin: string): string {
       if (state.error) html += '<div class="te-error">' + escapeHtml(state.error) + '</div>';
       container.innerHTML = html;
 
-      container.querySelectorAll('select').forEach(function(sel){
+      container.querySelectorAll('select[data-group]').forEach(function(sel){
         sel.addEventListener('change', function(){
           var gid = sel.getAttribute('data-group');
+          if (sel.value) state.selections[gid] = sel.value;
+          else delete state.selections[gid];
+          requestQuote();
+        });
+      });
+      container.querySelectorAll('select[data-cascade-a]').forEach(function(sel){
+        sel.addEventListener('change', function(){
+          var gid = sel.getAttribute('data-cascade-a');
+          if (!state.cascadeA) state.cascadeA = {};
+          state.cascadeA[gid] = sel.value;
+          delete state.selections[gid];
+          render();
+          requestQuote();
+        });
+      });
+      container.querySelectorAll('select[data-cascade-b]').forEach(function(sel){
+        sel.addEventListener('change', function(){
+          var gid = sel.getAttribute('data-cascade-b');
           if (sel.value) state.selections[gid] = sel.value;
           else delete state.selections[gid];
           requestQuote();
