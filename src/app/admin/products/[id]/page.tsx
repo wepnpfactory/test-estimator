@@ -112,13 +112,22 @@ async function updateOptionGroup(
   const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
   const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
   const displayTypeRaw = String(formData.get("displayType") || "SELECT");
-  const displayType: "SELECT" | "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" =
+  const displayType:
+    | "SELECT"
+    | "RADIO"
+    | "SWATCH"
+    | "NUMBER"
+    | "CHECKBOX"
+    | "CASCADE" =
     displayTypeRaw === "RADIO" ||
     displayTypeRaw === "SWATCH" ||
     displayTypeRaw === "NUMBER" ||
-    displayTypeRaw === "CHECKBOX"
-      ? (displayTypeRaw as "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX")
+    displayTypeRaw === "CHECKBOX" ||
+    displayTypeRaw === "CASCADE"
+      ? (displayTypeRaw as "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" | "CASCADE")
       : "SELECT";
+  const facetALabel = String(formData.get("facetALabel") || "").trim() || null;
+  const facetBLabel = String(formData.get("facetBLabel") || "").trim() || null;
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
@@ -132,6 +141,8 @@ async function updateOptionGroup(
       perArea,
       allowDirectInput,
       multiSelect,
+      facetALabel,
+      facetBLabel,
       minDirectInput:
         minDirectInput !== null && Number.isFinite(minDirectInput)
           ? minDirectInput
@@ -345,6 +356,15 @@ async function updateOptionItem(
       data.imageUrl = raw;
     }
     // 그 외 스킴은 무시 — 기존 값 유지
+  }
+
+  if (formData.has("facetA")) {
+    const raw = String(formData.get("facetA") ?? "").trim();
+    data.facetA = raw || null;
+  }
+  if (formData.has("facetB")) {
+    const raw = String(formData.get("facetB") ?? "").trim();
+    data.facetB = raw || null;
   }
 
   if (formData.has("disabledWhen")) {
@@ -586,6 +606,7 @@ export default async function EditProductPage({
               group={g}
               index={gi}
               total={groupCount}
+              allGroups={product.optionGroups}
               actions={optionGroupActions}
             />
           ))}

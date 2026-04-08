@@ -74,6 +74,8 @@ export async function GET(
         minDirectInput: g.minDirectInput ?? null,
         maxDirectInput: g.maxDirectInput ?? null,
         multiSelect: g.multiSelect,
+        facetALabel: g.facetALabel ?? null,
+        facetBLabel: g.facetBLabel ?? null,
         items: g.items.map((i) => ({
           id: i.id,
           label: i.label,
@@ -87,6 +89,8 @@ export async function GET(
           thicknessMm: i.thicknessMm,
           leadTimeDays: i.leadTimeDays,
           imageUrl: i.imageUrl ?? null,
+          facetA: i.facetA ?? null,
+          facetB: i.facetB ?? null,
           disabledWhen: i.disabledWhen ?? null,
         })),
       })),
