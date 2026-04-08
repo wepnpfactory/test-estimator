@@ -117,6 +117,32 @@ export interface CreateFacadeProductInput {
   shopNo?: number;
 }
 
+/**
+ * Cafe24 facade 상품의 판매가만 부분 업데이트.
+ * 게시 시 옵션 최저가로 동기화하는 용도.
+ */
+export async function updateFacadeProductPrice(params: {
+  mall: Cafe24Mall;
+  productNo: number;
+  price: number;
+  shopNo?: number;
+}): Promise<void> {
+  if (!Number.isFinite(params.price) || params.price < 0) {
+    throw new Error(`invalid price: ${params.price}`);
+  }
+  await cafe24Fetch(
+    params.mall,
+    `/api/v2/admin/products/${params.productNo}`,
+    {
+      method: "PUT",
+      body: {
+        shop_no: params.shopNo ?? params.mall.defaultShopNo ?? 1,
+        request: { price: String(Math.floor(params.price)) },
+      },
+    },
+  );
+}
+
 export async function createFacadeProduct(
   input: CreateFacadeProductInput,
 ): Promise<Cafe24ProductSummary> {

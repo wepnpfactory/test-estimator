@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { updateFacadeProductPrice } from "@/lib/cafe24/products";
 import {
   OptionBulkPaste,
   type ParsedItem,
@@ -67,11 +68,62 @@ async function deleteOptionItem(productId: string, itemId: string) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
+/**
+ * 게시 시점의 "옵션 최저금액" 계산:
+ *   basePrice + Σ(필수 그룹별 활성 아이템의 min(addPrice))
+ * 옵셔널 그룹은 선택 안 함으로 가정.
+ * 음수가 나오면 0 으로 floor (Cafe24 가 음수 가격 거부).
+ */
+function calcMinPossiblePrice(product: {
+  basePrice: number;
+  optionGroups: {
+    required: boolean;
+    items: { addPrice: number; enabled: boolean }[];
+  }[];
+}): number {
+  let total = product.basePrice;
+  for (const g of product.optionGroups) {
+    if (!g.required) continue;
+    const candidates = g.items.filter((i) => i.enabled);
+    if (candidates.length === 0) continue;
+    total += Math.min(...candidates.map((i) => i.addPrice));
+  }
+  return Math.max(0, total);
+}
+
 async function publishProduct(productId: string) {
   "use server";
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      mall: true,
+      optionGroups: { include: { items: true } },
+    },
+  });
+  if (!product) return;
+
+  const minPrice = calcMinPossiblePrice(product);
+
+  // Cafe24 facade 상품의 판매가도 최저가로 동기화
+  if (product.cafe24ProductNo && product.mall.accessToken) {
+    try {
+      await updateFacadeProductPrice({
+        mall: product.mall,
+        productNo: product.cafe24ProductNo,
+        price: minPrice,
+      });
+    } catch (e) {
+      console.warn(
+        "[publish] Cafe24 price sync failed:",
+        e instanceof Error ? e.message : e,
+      );
+      // 게시 자체는 진행
+    }
+  }
+
   await prisma.product.update({
     where: { id: productId },
-    data: { status: "PUBLISHED" },
+    data: { status: "PUBLISHED", basePrice: minPrice },
   });
   redirect(`/admin/products/${productId}`);
 }
