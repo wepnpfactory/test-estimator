@@ -30,10 +30,7 @@ export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: P
     setLoading(true);
     setError(null);
     const t = setTimeout(() => {
-      const url = new URL(
-        `/api/admin/cafe24/${mallDbId}/products`,
-        window.location.origin,
-      );
+      const url = new URL(`/api/admin/cafe24/${mallDbId}/products`, window.location.origin);
       if (search.trim()) url.searchParams.set("search", search.trim());
       url.searchParams.set("limit", "20");
       fetch(url.toString())
@@ -73,13 +70,9 @@ export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: P
       {error && <div className="text-xs text-rose-600">{error}</div>}
 
       <div className="max-h-80 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800">
-        {loading && (
-          <div className="px-3 py-6 text-center text-xs text-zinc-500">불러오는 중…</div>
-        )}
+        {loading && <div className="px-3 py-6 text-center text-xs text-zinc-500">불러오는 중…</div>}
         {!loading && products.length === 0 && !error && (
-          <div className="px-3 py-6 text-center text-xs text-zinc-500">
-            결과가 없습니다.
-          </div>
+          <div className="px-3 py-6 text-center text-xs text-zinc-500">결과가 없습니다.</div>
         )}
         <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
           {products.map((p) => {
@@ -99,11 +92,7 @@ export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: P
                 >
                   {p.listImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.listImage}
-                      alt=""
-                      className="h-10 w-10 shrink-0 rounded object-cover"
-                    />
+                    <img src={p.listImage} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
                   ) : (
                     <div className="h-10 w-10 shrink-0 rounded bg-zinc-100 dark:bg-zinc-800" />
                   )}
@@ -112,16 +101,12 @@ export function Cafe24ProductPicker({ mallDbId, onSelect, selectedProductNo }: P
                     <div
                       className={
                         "mt-0.5 flex items-center gap-2 text-[11px] " +
-                        (selected
-                          ? "text-zinc-200 dark:text-zinc-600"
-                          : "text-zinc-500")
+                        (selected ? "text-zinc-200 dark:text-zinc-600" : "text-zinc-500")
                       }
                     >
                       <span className="font-mono">#{p.productNo}</span>
                       <span>·</span>
-                      <span className="tabular-nums">
-                        {Number(p.price).toLocaleString()}원
-                      </span>
+                      <span className="tabular-nums">{Number(p.price).toLocaleString()}원</span>
                       {hidden && <span className="ml-1">· 진열X</span>}
                     </div>
                   </div>
