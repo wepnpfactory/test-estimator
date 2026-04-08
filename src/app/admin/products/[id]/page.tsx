@@ -75,6 +75,8 @@ async function updateOptionGroup(
   const maxDirectRaw = String(formData.get("maxDirectInput") || "").trim();
   const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
   const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
+  const isInnerPaper = formData.get("isInnerPaper") === "on";
+  const isCoverPaper = formData.get("isCoverPaper") === "on";
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
@@ -86,6 +88,8 @@ async function updateOptionGroup(
       perQuantity,
       perArea,
       allowDirectInput,
+      isInnerPaper,
+      isCoverPaper,
       minDirectInput:
         minDirectInput !== null && Number.isFinite(minDirectInput)
           ? minDirectInput
@@ -118,11 +122,17 @@ async function updateProductMeta(productId: string, formData: FormData) {
   "use server";
   const baseAreaRaw = String(formData.get("baseAreaMm2") || "").trim();
   const baseAreaMm2 = Number(baseAreaRaw);
+  const bleedRaw = String(formData.get("bleedMm") || "").trim();
+  const bleedMm = Number(bleedRaw);
+  const data: { baseAreaMm2?: number; bleedMm?: number } = {};
   if (Number.isFinite(baseAreaMm2) && baseAreaMm2 > 0) {
-    await prisma.product.update({
-      where: { id: productId },
-      data: { baseAreaMm2: Math.round(baseAreaMm2) },
-    });
+    data.baseAreaMm2 = Math.round(baseAreaMm2);
+  }
+  if (Number.isFinite(bleedMm) && bleedMm >= 0) {
+    data.bleedMm = Math.round(bleedMm);
+  }
+  if (Object.keys(data).length > 0) {
+    await prisma.product.update({ where: { id: productId }, data });
   }
   revalidatePath(`/admin/products/${productId}`);
 }
@@ -189,6 +199,8 @@ async function updateOptionItem(
   const maxRangeRaw = String(formData.get("maxRange") || "").trim();
   const minRange = minRangeRaw === "" ? null : Number(minRangeRaw);
   const maxRange = maxRangeRaw === "" ? null : Number(maxRangeRaw);
+  const thicknessRaw = String(formData.get("thicknessMm") || "").trim();
+  const thicknessMm = thicknessRaw === "" ? null : Number(thicknessRaw);
   await prisma.optionItem.update({
     where: { id: itemId },
     data: {
@@ -197,6 +209,10 @@ async function updateOptionItem(
         minRange !== null && Number.isFinite(minRange) ? minRange : null,
       maxRange:
         maxRange !== null && Number.isFinite(maxRange) ? maxRange : null,
+      thicknessMm:
+        thicknessMm !== null && Number.isFinite(thicknessMm) && thicknessMm > 0
+          ? thicknessMm
+          : null,
       widthMm:
         widthMm !== null && Number.isFinite(widthMm) && widthMm > 0
           ? widthMm
@@ -357,6 +373,7 @@ export default async function EditProductPage({
           <BaseAreaForm
             productId={product.id}
             current={product.baseAreaMm2 ?? 62370}
+            bleed={product.bleedMm ?? 3}
             action={updateProductMeta}
           />
           <span
@@ -556,6 +573,29 @@ export default async function EditProductPage({
                               </div>
                             </Field>
 
+                            <Field label="용지 역할 (책자 사이즈 자동 계산)">
+                              <div className="flex gap-3">
+                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    name="isInnerPaper"
+                                    defaultChecked={g.isInnerPaper}
+                                    className="size-3.5"
+                                  />
+                                  내지 종이
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    name="isCoverPaper"
+                                    defaultChecked={g.isCoverPaper}
+                                    className="size-3.5"
+                                  />
+                                  표지 종이
+                                </label>
+                              </div>
+                            </Field>
+
                             {(g.kind === "SHEET_COUNT" ||
                               g.kind === "QUANTITY") && (
                               <Field label="직접 입력 모드">
@@ -738,7 +778,9 @@ export default async function EditProductPage({
                                       ? "장수"
                                       : "부수";
                                   const showDims = g.kind === "DIMENSIONS";
-                                  if (!showMultiplier && !showDims && !showRange) {
+                                  const showThickness =
+                                    g.isInnerPaper || g.isCoverPaper;
+                                  if (!showMultiplier && !showDims && !showRange && !showThickness) {
                                     return null;
                                   }
                                   return (
@@ -806,6 +848,20 @@ export default async function EditProductPage({
                                             mm
                                           </label>
                                         </>
+                                      )}
+                                      {showThickness && (
+                                        <label className="flex items-center gap-1">
+                                          두께
+                                          <input
+                                            type="number"
+                                            step="0.001"
+                                            name="thicknessMm"
+                                            defaultValue={it.thicknessMm ?? ""}
+                                            placeholder="장당"
+                                            className="w-20 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                          />
+                                          mm
+                                        </label>
                                       )}
                                       <button className="ms-auto rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
                                         저장

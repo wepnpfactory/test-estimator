@@ -28,6 +28,7 @@ const PRESETS: Preset[] = [
 interface Props {
   productId: string;
   current: number;
+  bleed: number;
   action: (productId: string, formData: FormData) => Promise<void>;
 }
 
@@ -35,7 +36,7 @@ function findMatchingPreset(area: number): Preset | undefined {
   return PRESETS.find((p) => p.w * p.h === area);
 }
 
-export function BaseAreaForm({ productId, current, action }: Props) {
+export function BaseAreaForm({ productId, current, bleed, action }: Props) {
   const [w, setW] = useState<number>(() => {
     const m = findMatchingPreset(current);
     return m ? m.w : Math.round(Math.sqrt(current));
@@ -44,6 +45,7 @@ export function BaseAreaForm({ productId, current, action }: Props) {
     const m = findMatchingPreset(current);
     return m ? m.h : Math.round(Math.sqrt(current));
   });
+  const [bleedMm, setBleedMm] = useState<number>(bleed);
   const [pending, startTransition] = useTransition();
   const area = w * h;
 
@@ -57,6 +59,7 @@ export function BaseAreaForm({ productId, current, action }: Props) {
 
   async function onSubmit(formData: FormData) {
     formData.set("baseAreaMm2", String(area));
+    formData.set("bleedMm", String(bleedMm));
     startTransition(async () => {
       try {
         await action(productId, formData);
@@ -104,6 +107,18 @@ export function BaseAreaForm({ productId, current, action }: Props) {
       <span className="font-mono text-zinc-500">
         = {area.toLocaleString()}mm²
       </span>
+      <span className="text-zinc-400">·</span>
+      <label className="flex items-center gap-1 text-zinc-500">
+        도련
+        <input
+          type="number"
+          value={bleedMm}
+          min={0}
+          onChange={(e) => setBleedMm(Math.max(0, Number(e.target.value) || 0))}
+          className="w-12 rounded border border-zinc-300 px-1.5 py-0.5 text-right dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        mm
+      </label>
       <button
         disabled={pending}
         className="rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700 disabled:opacity-50"
