@@ -8,13 +8,24 @@ interface Preset {
   h: number;
 }
 
-const PRESETS: Preset[] = [
+// 책자 — 도서/잡지 표준 사이즈
+const BOOKLET_PRESETS: Preset[] = [
+  { label: "A6 (105×148)", w: 105, h: 148 },
+  { label: "B6 (128×182)", w: 128, h: 182 },
+  { label: "신국판 (152×225)", w: 152, h: 225 },
+  { label: "크라운판 (176×248)", w: 176, h: 248 },
+  { label: "A5 (148×210)", w: 148, h: 210 },
+  { label: "B5 (182×257)", w: 182, h: 257 },
+  { label: "A4 (210×297)", w: 210, h: 297 },
+];
+
+// 낱장 인쇄 — 명함/엽서/포스터 표준 사이즈
+const FLAT_PRESETS: Preset[] = [
   { label: "명함 (90×50)", w: 90, h: 50 },
   { label: "명함 (85×55)", w: 85, h: 55 },
   { label: "엽서 (100×148)", w: 100, h: 148 },
+  { label: "엽서 (102×152)", w: 102, h: 152 },
   { label: "A6 (105×148)", w: 105, h: 148 },
-  { label: "신국판 (152×225)", w: 152, h: 225 },
-  { label: "B6 (128×182)", w: 128, h: 182 },
   { label: "A5 (148×210)", w: 148, h: 210 },
   { label: "B5 (182×257)", w: 182, h: 257 },
   { label: "A4 (210×297)", w: 210, h: 297 },
@@ -25,24 +36,44 @@ const PRESETS: Preset[] = [
   { label: "B2 (515×728)", w: 515, h: 728 },
 ];
 
+const ALL_PRESETS: Preset[] = Array.from(
+  new Map(
+    [...BOOKLET_PRESETS, ...FLAT_PRESETS].map((p) => [p.label, p]),
+  ).values(),
+);
+
+function getPresets(template: string): Preset[] {
+  if (template === "BOOKLET") return BOOKLET_PRESETS;
+  if (template === "FLAT_PRINT") return FLAT_PRESETS;
+  return ALL_PRESETS;
+}
+
 interface Props {
   productId: string;
   current: number;
   bleed: number;
+  template: string;
   action: (productId: string, formData: FormData) => Promise<void>;
 }
 
-function findMatchingPreset(area: number): Preset | undefined {
-  return PRESETS.find((p) => p.w * p.h === area);
+function findMatchingPreset(area: number, presets: Preset[]): Preset | undefined {
+  return presets.find((p) => p.w * p.h === area);
 }
 
-export function BaseAreaForm({ productId, current, bleed, action }: Props) {
+export function BaseAreaForm({
+  productId,
+  current,
+  bleed,
+  template,
+  action,
+}: Props) {
+  const presets = getPresets(template);
   const [w, setW] = useState<number>(() => {
-    const m = findMatchingPreset(current);
+    const m = findMatchingPreset(current, ALL_PRESETS);
     return m ? m.w : Math.round(Math.sqrt(current));
   });
   const [h, setH] = useState<number>(() => {
-    const m = findMatchingPreset(current);
+    const m = findMatchingPreset(current, ALL_PRESETS);
     return m ? m.h : Math.round(Math.sqrt(current));
   });
   const [bleedMm, setBleedMm] = useState<number>(bleed);
@@ -50,7 +81,7 @@ export function BaseAreaForm({ productId, current, bleed, action }: Props) {
   const area = w * h;
 
   function applyPreset(label: string) {
-    const p = PRESETS.find((x) => x.label === label);
+    const p = ALL_PRESETS.find((x) => x.label === label);
     if (p) {
       setW(p.w);
       setH(p.h);
@@ -83,8 +114,15 @@ export function BaseAreaForm({ productId, current, bleed, action }: Props) {
         defaultValue=""
         className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
       >
-        <option value="">프리셋 선택</option>
-        {PRESETS.map((p) => (
+        <option value="">
+          프리셋 ({template === "BOOKLET"
+            ? "책자"
+            : template === "FLAT_PRINT"
+              ? "낱장"
+              : "전체"}
+          )
+        </option>
+        {presets.map((p) => (
           <option key={p.label} value={p.label}>
             {p.label}
           </option>
