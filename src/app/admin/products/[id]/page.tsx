@@ -473,7 +473,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <Link
         href="/admin/products"
         className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-foreground"
