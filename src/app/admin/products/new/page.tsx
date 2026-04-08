@@ -1,9 +1,37 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { NewProductForm } from "./_components/new-product-form";
 import { FacadeCreateForm } from "./_components/facade-create-form";
 import { ModeTabs } from "./_components/mode-tabs";
 import { createFacadeProduct } from "@/lib/cafe24/products";
+import { installScriptTag } from "@/lib/cafe24/script-tags";
+import type { Cafe24Mall } from "@/generated/prisma/client";
+
+async function buildEmbedSrc(): Promise<string> {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  return `${proto}://${host}/embed.js`;
+}
+
+async function ensureScriptTagInstalled(mall: Cafe24Mall) {
+  try {
+    const src = await buildEmbedSrc();
+    await installScriptTag({
+      mall,
+      src,
+      locations: ["PRODUCT_DETAIL"],
+      replaceSameOrigin: true,
+    });
+  } catch (e) {
+    // 상품 등록 자체는 막지 않는다. 관리자가 /admin/malls 에서 재설치 가능.
+    console.warn(
+      "[products/new] script tag install failed:",
+      e instanceof Error ? e.message : e,
+    );
+  }
+}
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -23,6 +51,9 @@ async function createProduct(formData: FormData) {
     throw new Error("필수 입력값이 누락되었습니다.");
   }
 
+  const mall = await prisma.cafe24Mall.findUnique({ where: { id: mallId } });
+  if (!mall) throw new Error("연결된 몰을 찾을 수 없습니다.");
+
   const product = await prisma.product.create({
     data: {
       mallId,
@@ -33,6 +64,10 @@ async function createProduct(formData: FormData) {
       status: "DRAFT",
     },
   });
+
+  // 신규 연결 후 embed.js 가 몰에 설치되어 있는지 확인 + 없으면 설치
+  if (mall.accessToken) await ensureScriptTagInstalled(mall);
+
   redirect(`/admin/products/${product.id}`);
 }
 
@@ -77,6 +112,9 @@ async function createFacadeAndLink(formData: FormData) {
       status: "DRAFT",
     },
   });
+
+  await ensureScriptTagInstalled(mall);
+
   redirect(`/admin/products/${product.id}`);
 }
 

@@ -101,7 +101,7 @@ export function ScriptTagControls({ mallDbId }: { mallDbId: string }) {
             disabled={busy}
             className="rounded-md bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800 disabled:bg-zinc-300 dark:bg-white dark:text-zinc-900 dark:disabled:bg-zinc-700"
           >
-            {busy ? "처리 중…" : status?.installed ? "재설치" : "설치"}
+            {busy ? "처리 중…" : "재설치"}
           </button>
           {status?.installed && (
             <button
