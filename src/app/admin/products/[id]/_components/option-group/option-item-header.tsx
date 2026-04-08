@@ -4,7 +4,7 @@ interface Props {
   group: OptionGroupWithItems;
 }
 
-const cellCls = "px-1.5 text-[10px] font-medium uppercase tracking-[0.05em] text-text-tertiary";
+const cellCls = "px-1.5 text-[10px] font-medium uppercase tracking-wider text-text-tertiary";
 
 /**
  * OptionItemRow 와 동일한 칼럼 구성으로 헤더 한 줄을 렌더한다.
@@ -38,7 +38,9 @@ export function OptionItemHeader({ group }: Props) {
 
       <div className={`${cellCls} min-w-0 flex-1 text-left`}>표시명</div>
       <div className={`${cellCls} w-24 text-left`}>value</div>
-      <div className={`${cellCls} w-32 text-right`}>추가금액</div>
+      {!showDims && (
+        <div className={`${cellCls} w-32 text-right`}>추가금액</div>
+      )}
 
       {showMultiplier && <div className={`${cellCls} w-16 text-right`}>장·부수</div>}
       {showRange && (
@@ -53,7 +55,7 @@ export function OptionItemHeader({ group }: Props) {
           <div className={`${cellCls} w-14 text-right`}>가로</div>
           <span className="w-2" />
           <div className={`${cellCls} w-14 text-right`}>세로</div>
-          <span className="w-[10px]" />
+          <span className="w-2.5" />
         </>
       )}
       {showThickness && <div className={`${cellCls} w-16 text-right`}>두께</div>}

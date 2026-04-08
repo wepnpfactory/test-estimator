@@ -253,25 +253,27 @@ export function OptionItemRow({
         />
       </div>
 
-      {/* addPrice */}
-      <div className="w-32">
-        <Cell
-          name="addPrice"
-          defaultValue={item.addPrice}
-          type="number"
-          align="right"
-          display={
-            <span className="tabular-nums text-text-secondary">
-              {item.addPrice > 0 ? "+" : ""}
-              {item.addPrice.toLocaleString()}원
-              {suffix && (
-                <span className="ms-0.5 text-text-tertiary">{suffix}</span>
-              )}
-            </span>
-          }
-          patch={patch}
-        />
-      </div>
+      {/* addPrice — DIMENSIONS 그룹은 가격을 가지지 않음 (용지 그룹의 perArea 곱셈으로 결정) */}
+      {!showDims && (
+        <div className="w-32">
+          <Cell
+            name="addPrice"
+            defaultValue={item.addPrice}
+            type="number"
+            align="right"
+            display={
+              <span className="tabular-nums text-text-secondary">
+                {item.addPrice > 0 ? "+" : ""}
+                {item.addPrice.toLocaleString()}원
+                {suffix && (
+                  <span className="ms-0.5 text-text-tertiary">{suffix}</span>
+                )}
+              </span>
+            }
+            patch={patch}
+          />
+        </div>
+      )}
 
       {/* context fields */}
       {showMultiplier && (

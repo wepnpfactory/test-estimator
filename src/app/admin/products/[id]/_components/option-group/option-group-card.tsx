@@ -123,8 +123,15 @@ export function OptionGroupCard({
                     </div>
                   );
                 }
+                const isDimensions = group.kind === "DIMENSIONS";
                 return (
                   <>
+                    {isDimensions && (
+                      <div className="rounded-md border border-dashed border-info/30 bg-info/5 px-3 py-2 text-[11px] text-text-secondary">
+                        💡 사이즈 그룹은 가격을 가지지 않습니다. 가격은 용지 그룹의 <b>면적 곱셈(perArea)</b> 으로 자동 계산됩니다.
+                      </div>
+                    )}
+
                     {/* 옵션 아이템 목록 */}
                     {itemCount === 0 ? (
                       <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-[11px] text-text-tertiary">
@@ -151,7 +158,11 @@ export function OptionGroupCard({
                     {/* 새 아이템 추가 */}
                     <form
                       action={actions.addItem.bind(null, group.id, productId)}
-                      className="grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
+                      className={
+                        isDimensions
+                          ? "grid grid-cols-[1fr_1fr_auto] gap-2"
+                          : "grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
+                      }
                     >
                       <input
                         name="label"
@@ -163,12 +174,14 @@ export function OptionGroupCard({
                         placeholder="value"
                         className={inputFull}
                       />
-                      <input
-                        name="addPrice"
-                        type="number"
-                        placeholder="추가금액"
-                        className={inputFull}
-                      />
+                      {!isDimensions && (
+                        <input
+                          name="addPrice"
+                          type="number"
+                          placeholder="추가금액"
+                          className={inputFull}
+                        />
+                      )}
                       <button className={buttonGhostCls}>추가</button>
                     </form>
 
