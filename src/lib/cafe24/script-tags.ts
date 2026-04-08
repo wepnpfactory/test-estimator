@@ -1,0 +1,171 @@
+// Cafe24 Script Tags API
+// docs: https://developers.cafe24.com/docs/en/api/admin/?version=2025-12-01#script-tags
+//
+// 용도: 쇼핑몰 테마(스킨)에 embed.js 같은 외부 스크립트를 코드 수정 없이 주입한다.
+// 등록한 script_tag 는 display_location 에서 지정한 페이지가 렌더될 때 자동 삽입된다.
+//
+// 우리 프로젝트는 PRODUCT_DETAIL 에 embed.js 를 설치한다.
+// 동일 src 가 이미 있으면 중복 등록하지 않는다 (idempotent).
+
+import { cafe24Fetch } from "@/lib/cafe24/client";
+import type { Cafe24Mall } from "@/generated/prisma/client";
+
+export type ScriptTagLocation =
+  | "BEFORE_BODY_TAG"
+  | "AFTER_BODY_TAG"
+  | "PRODUCT_DETAIL"
+  | "PRODUCT_LIST"
+  | "MAIN"
+  | "ORDER_BASKET"
+  | "MY_PAGE";
+
+export interface Cafe24ScriptTag {
+  scriptNo: number;
+  src: string;
+  displayLocation: string[];
+  client_id?: string;
+}
+
+interface RawScriptTag {
+  shop_no?: number;
+  script_no: number;
+  src: string;
+  display_location: string[] | string;
+  client_id?: string;
+}
+
+interface ListResponse {
+  scripttags?: RawScriptTag[];
+}
+
+function normalize(t: RawScriptTag): Cafe24ScriptTag {
+  return {
+    scriptNo: t.script_no,
+    src: t.src,
+    displayLocation: Array.isArray(t.display_location)
+      ? t.display_location
+      : [t.display_location],
+    client_id: t.client_id,
+  };
+}
+
+export async function listScriptTags(
+  mall: Cafe24Mall,
+  shopNo?: number,
+): Promise<Cafe24ScriptTag[]> {
+  const res = await cafe24Fetch<ListResponse>(mall, "/api/v2/admin/scripttags", {
+    method: "GET",
+    query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
+  });
+  return (res.scripttags ?? []).map(normalize);
+}
+
+export async function deleteScriptTag(
+  mall: Cafe24Mall,
+  scriptNo: number,
+  shopNo?: number,
+): Promise<void> {
+  await cafe24Fetch(
+    mall,
+    `/api/v2/admin/scripttags/${scriptNo}`,
+    {
+      method: "DELETE",
+      query: { shop_no: shopNo ?? mall.defaultShopNo ?? 1 },
+    },
+  );
+}
+
+export interface InstallScriptTagInput {
+  mall: Cafe24Mall;
+  src: string;
+  /** 기본 PRODUCT_DETAIL */
+  locations?: ScriptTagLocation[];
+  shopNo?: number;
+  /**
+   * 동일 origin 의 기존 스크립트가 있으면 모두 제거 후 새로 등록한다.
+   * (배포·도메인 변경 시 stale 항목 정리용)
+   */
+  replaceSameOrigin?: boolean;
+}
+
+export interface InstallScriptTagResult {
+  installed: boolean;
+  scriptNo?: number;
+  removedCount: number;
+  alreadyExisted: boolean;
+}
+
+export async function installScriptTag(
+  input: InstallScriptTagInput,
+): Promise<InstallScriptTagResult> {
+  const {
+    mall,
+    src,
+    locations = ["PRODUCT_DETAIL"],
+    shopNo,
+    replaceSameOrigin = true,
+  } = input;
+  const targetOrigin = new URL(src).origin;
+
+  const existing = await listScriptTags(mall, shopNo);
+
+  // 정확히 같은 src + 동일 location 조합이면 재설치 불필요
+  const exactMatch = existing.find(
+    (t) =>
+      t.src === src &&
+      locations.every((loc) => t.displayLocation.includes(loc)),
+  );
+  if (exactMatch) {
+    return {
+      installed: false,
+      scriptNo: exactMatch.scriptNo,
+      removedCount: 0,
+      alreadyExisted: true,
+    };
+  }
+
+  // 같은 origin 의 stale 스크립트 제거
+  let removedCount = 0;
+  if (replaceSameOrigin) {
+    const stale = existing.filter((t) => {
+      try {
+        return new URL(t.src).origin === targetOrigin;
+      } catch {
+        return false;
+      }
+    });
+    for (const t of stale) {
+      try {
+        await deleteScriptTag(mall, t.scriptNo, shopNo);
+        removedCount++;
+      } catch (e) {
+        console.warn(
+          `[script-tags] failed to delete stale ${t.scriptNo}:`,
+          e instanceof Error ? e.message : e,
+        );
+      }
+    }
+  }
+
+  const res = await cafe24Fetch<{ scripttag: RawScriptTag }>(
+    mall,
+    "/api/v2/admin/scripttags",
+    {
+      method: "POST",
+      body: {
+        shop_no: shopNo ?? mall.defaultShopNo ?? 1,
+        request: {
+          src,
+          display_location: locations,
+        },
+      },
+    },
+  );
+
+  return {
+    installed: true,
+    scriptNo: res.scripttag?.script_no,
+    removedCount,
+    alreadyExisted: false,
+  };
+}
