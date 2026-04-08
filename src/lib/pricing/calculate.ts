@@ -164,8 +164,8 @@ export function calculateQuote(
   const resolvedItems: QuoteResult["resolvedItems"] = [];
   for (const { group, item } of validatedItems) {
     let c = item.addPrice;
-    if (item.perSheet) c *= sheets;
-    if (item.perQuantity) c *= quantity;
+    if (group.perSheet) c *= sheets;
+    if (group.perQuantity) c *= quantity;
     optionsAddPrice += c;
     resolvedItems.push({
       groupName: group.name,
