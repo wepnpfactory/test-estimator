@@ -6,20 +6,28 @@ export async function OPTIONS(req: NextRequest) {
   return preflight(req.headers.get("origin"));
 }
 
-// GET — 겉보기 상품번호로 바인딩된 옵션 스키마 반환
+// GET — (mallId, cafe24ProductNo) 로 식별된 facade 상품의 옵션 스키마 반환
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ cafe24ProductNo: string }> },
+  {
+    params,
+  }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> },
 ) {
   const origin = req.headers.get("origin");
-  const { cafe24ProductNo } = await params;
+  const { mallId, cafe24ProductNo } = await params;
+
   const productNo = Number(cafe24ProductNo);
-  if (!Number.isFinite(productNo)) {
+  if (!Number.isInteger(productNo) || productNo <= 0) {
     return withCors({ error: "invalid product no" }, origin, { status: 400 });
   }
 
+  const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
+  if (!mall) {
+    return withCors({ error: "mall not found" }, origin, { status: 404 });
+  }
+
   const product = await prisma.product.findFirst({
-    where: { cafe24ProductNo: productNo, status: "PUBLISHED" },
+    where: { mallId: mall.id, cafe24ProductNo: productNo, status: "PUBLISHED" },
     include: {
       optionGroups: {
         orderBy: { sortOrder: "asc" },
@@ -39,6 +47,7 @@ export async function GET(
   return withCors(
     {
       id: product.id,
+      mallId: mall.mallId,
       name: product.name,
       basePrice: product.basePrice,
       optionGroups: product.optionGroups.map((g) => ({

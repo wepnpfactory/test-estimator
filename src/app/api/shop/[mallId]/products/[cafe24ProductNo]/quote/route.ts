@@ -6,7 +6,12 @@ import { calculateQuote } from "@/lib/pricing/calculate";
 
 const Body = z.object({
   selections: z
-    .array(z.object({ groupId: z.string(), itemId: z.string() }))
+    .array(
+      z.object({
+        groupId: z.string().min(1).max(64),
+        itemId: z.string().min(1).max(64),
+      }),
+    )
     .max(50),
 });
 
@@ -16,12 +21,15 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ cafe24ProductNo: string }> },
+  {
+    params,
+  }: { params: Promise<{ mallId: string; cafe24ProductNo: string }> },
 ) {
   const origin = req.headers.get("origin");
-  const { cafe24ProductNo } = await params;
+  const { mallId, cafe24ProductNo } = await params;
+
   const productNo = Number(cafe24ProductNo);
-  if (!Number.isFinite(productNo)) {
+  if (!Number.isInteger(productNo) || productNo <= 0) {
     return withCors({ error: "invalid product no" }, origin, { status: 400 });
   }
 
@@ -36,11 +44,14 @@ export async function POST(
     );
   }
 
+  const mall = await prisma.cafe24Mall.findUnique({ where: { mallId } });
+  if (!mall) {
+    return withCors({ error: "mall not found" }, origin, { status: 404 });
+  }
+
   const product = await prisma.product.findFirst({
-    where: { cafe24ProductNo: productNo, status: "PUBLISHED" },
-    include: {
-      optionGroups: { include: { items: true } },
-    },
+    where: { mallId: mall.id, cafe24ProductNo: productNo, status: "PUBLISHED" },
+    include: { optionGroups: { include: { items: true } } },
   });
   if (!product) {
     return withCors({ error: "not found" }, origin, { status: 404 });
@@ -48,8 +59,11 @@ export async function POST(
 
   const quote = calculateQuote(product, parsed.selections);
   if (quote.errors.length > 0) {
+    return withCors({ ok: false, ...quote }, origin, { status: 422 });
+  }
+  if (quote.finalPrice < 0) {
     return withCors(
-      { ok: false, ...quote },
+      { ok: false, ...quote, errors: ["finalPrice negative"] },
       origin,
       { status: 422 },
     );
