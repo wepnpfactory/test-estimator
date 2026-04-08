@@ -55,6 +55,7 @@ export async function GET(
       name: product.name,
       basePrice: product.basePrice,
       baseAreaMm2: product.baseAreaMm2,
+      bleedMm: product.bleedMm,
       optionGroups: product.optionGroups.map((g) => ({
         id: g.id,
         name: g.name,
@@ -71,6 +72,8 @@ export async function GET(
         allowDirectInput: g.allowDirectInput,
         minDirectInput: g.minDirectInput ?? null,
         maxDirectInput: g.maxDirectInput ?? null,
+        isInnerPaper: g.isInnerPaper,
+        isCoverPaper: g.isCoverPaper,
         items: g.items.map((i) => ({
           id: i.id,
           label: i.label,
@@ -81,6 +84,7 @@ export async function GET(
           heightMm: i.heightMm,
           minRange: i.minRange,
           maxRange: i.maxRange,
+          thicknessMm: i.thicknessMm,
           showWhen: i.showWhen ?? null,
         })),
       })),
