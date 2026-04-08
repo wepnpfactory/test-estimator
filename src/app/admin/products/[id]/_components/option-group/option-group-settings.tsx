@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { buttonCls, inputCls } from "../form-styles";
 import { Field } from "./field";
+import { GroupShowWhenPicker } from "./group-show-when-picker";
 import type { OptionGroupActions, OptionGroupWithItems } from "./types";
 
 const inputFull = inputCls + " w-full";
@@ -9,11 +10,16 @@ const inputFull = inputCls + " w-full";
 interface Props {
   productId: string;
   group: OptionGroupWithItems;
+  precedingGroups: OptionGroupWithItems[];
   actions: OptionGroupActions;
 }
 
-export function OptionGroupSettings({ productId, group, actions }: Props) {
-  const showWhenStr = group.showWhen ? JSON.stringify(group.showWhen) : "";
+export function OptionGroupSettings({
+  productId,
+  group,
+  precedingGroups,
+  actions,
+}: Props) {
 
   return (
     <details className="group rounded-md border border-border bg-surface-subtle">
@@ -58,7 +64,9 @@ export function OptionGroupSettings({ productId, group, actions }: Props) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div
+          className={`grid grid-cols-1 gap-4 ${group.displayType === "CHECKBOX" ? "sm:grid-cols-2" : ""}`}
+        >
           <Field label="필수 여부">
             <label className="flex h-8 items-center gap-2 text-xs text-foreground">
               <input
@@ -70,17 +78,19 @@ export function OptionGroupSettings({ productId, group, actions }: Props) {
               필수 그룹
             </label>
           </Field>
-          <Field label="다중 선택">
-            <label className="flex h-8 items-center gap-2 text-xs text-foreground">
-              <input
-                type="checkbox"
-                name="multiSelect"
-                defaultChecked={group.multiSelect}
-                className="size-4"
-              />
-              한 그룹에서 복수 아이템 선택 허용 (후가공 체크박스)
-            </label>
-          </Field>
+          {group.displayType === "CHECKBOX" && (
+            <Field label="다중 선택">
+              <label className="flex h-8 items-center gap-2 text-xs text-foreground">
+                <input
+                  type="checkbox"
+                  name="multiSelect"
+                  defaultChecked={group.multiSelect}
+                  className="size-4"
+                />
+                한 그룹에서 복수 아이템 선택 허용
+              </label>
+            </Field>
+          )}
         </div>
 
         {(group.kind === "NORMAL" ||
@@ -155,15 +165,12 @@ export function OptionGroupSettings({ productId, group, actions }: Props) {
         )}
 
         <Field
-          label="보이는 조건 (JSON)"
-          hint={`예: [{"groupId":"abc","itemId":"xyz"}] · 비우면 항상 노출`}
+          label="보이는 조건"
+          hint="선행 옵션의 특정 값이 선택됐을 때만 이 그룹을 노출합니다. 비우면 항상 노출."
         >
-          <textarea
-            name="showWhen"
-            defaultValue={showWhenStr}
-            rows={2}
-            spellCheck={false}
-            className={inputFull + " h-auto font-mono"}
+          <GroupShowWhenPicker
+            currentShowWhen={group.showWhen}
+            precedingGroups={precedingGroups}
           />
         </Field>
 

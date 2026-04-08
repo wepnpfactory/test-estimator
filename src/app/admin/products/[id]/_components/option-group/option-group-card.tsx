@@ -15,6 +15,8 @@ interface Props {
   group: OptionGroupWithItems;
   index: number;
   total: number;
+  /** 같은 상품의 모든 그룹 (sortOrder 오름차순). 조건 선택용. */
+  allGroups: OptionGroupWithItems[];
   actions: OptionGroupActions;
 }
 
@@ -27,8 +29,13 @@ export function OptionGroupCard({
   group,
   index,
   total,
+  allGroups,
   actions,
 }: Props) {
+  // 현재 그룹보다 sortOrder 가 앞선 그룹들만 조건 후보로 사용
+  const precedingGroups = allGroups.filter(
+    (g) => g.sortOrder < group.sortOrder,
+  );
   const itemCount = group.items.length;
   const addPrices = group.items.map((i) => i.addPrice);
   const minAdd = addPrices.length ? Math.min(...addPrices) : 0;
@@ -99,60 +106,80 @@ export function OptionGroupCard({
               <OptionGroupSettings
                 productId={productId}
                 group={group}
+                precedingGroups={precedingGroups}
                 actions={actions}
               />
 
-              {/* 옵션 아이템 목록 */}
-              {itemCount === 0 ? (
-                <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-[11px] text-text-tertiary">
-                  아직 추가된 값이 없습니다
-                </div>
-              ) : (
-                <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                  <OptionItemHeader group={group} />
-                  {group.items.map((it, ii) => (
-                    <OptionItemRow
-                      key={it.id}
+              {/* 페이지수·부수 직접 입력 그룹은 아이템 목록 숨김 — 숫자 입력만으로 동작 */}
+              {(() => {
+                const hideItems =
+                  (group.kind === "SHEET_COUNT" ||
+                    group.kind === "QUANTITY") &&
+                  group.allowDirectInput;
+                if (hideItems) {
+                  return (
+                    <div className="rounded-md border border-dashed border-border px-3 py-3 text-center text-[11px] text-text-tertiary">
+                      직접 입력 모드 — 사용자가 숫자를 직접 입력합니다 (옵션 값 불필요)
+                    </div>
+                  );
+                }
+                return (
+                  <>
+                    {/* 옵션 아이템 목록 */}
+                    {itemCount === 0 ? (
+                      <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-[11px] text-text-tertiary">
+                        아직 추가된 값이 없습니다
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+                        <OptionItemHeader group={group} />
+                        {group.items.map((it, ii) => (
+                          <OptionItemRow
+                            key={it.id}
+                            productId={productId}
+                            group={group}
+                            item={it}
+                            index={ii}
+                            total={itemCount}
+                            precedingGroups={precedingGroups}
+                            actions={actions}
+                          />
+                        ))}
+                      </ul>
+                    )}
+
+                    {/* 새 아이템 추가 */}
+                    <form
+                      action={actions.addItem.bind(null, group.id, productId)}
+                      className="grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
+                    >
+                      <input
+                        name="label"
+                        placeholder="표시명"
+                        className={inputFull}
+                      />
+                      <input
+                        name="value"
+                        placeholder="value"
+                        className={inputFull}
+                      />
+                      <input
+                        name="addPrice"
+                        type="number"
+                        placeholder="추가금액"
+                        className={inputFull}
+                      />
+                      <button className={buttonGhostCls}>추가</button>
+                    </form>
+
+                    <OptionBulkPaste
+                      groupId={group.id}
                       productId={productId}
-                      group={group}
-                      item={it}
-                      index={ii}
-                      total={itemCount}
-                      actions={actions}
+                      bulkAction={actions.bulkAddItems}
                     />
-                  ))}
-                </ul>
-              )}
-
-              {/* 새 아이템 추가 */}
-              <form
-                action={actions.addItem.bind(null, group.id, productId)}
-                className="grid grid-cols-[1fr_1fr_7rem_auto] gap-2"
-              >
-                <input
-                  name="label"
-                  placeholder="표시명"
-                  className={inputFull}
-                />
-                <input
-                  name="value"
-                  placeholder="value"
-                  className={inputFull}
-                />
-                <input
-                  name="addPrice"
-                  type="number"
-                  placeholder="추가금액"
-                  className={inputFull}
-                />
-                <button className={buttonGhostCls}>추가</button>
-              </form>
-
-              <OptionBulkPaste
-                groupId={group.id}
-                productId={productId}
-                bulkAction={actions.bulkAddItems}
-              />
+                  </>
+                );
+              })()}
             </div>
           </CollapsibleSection>
         </div>
