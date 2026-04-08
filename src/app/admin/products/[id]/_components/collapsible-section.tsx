@@ -44,10 +44,10 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="group flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+        className="group flex w-full items-center gap-2 rounded-md px-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ChevronDown
-          className={`size-4 text-zinc-400 transition-transform duration-150 ${
+          className={`size-4 text-text-tertiary transition-transform duration-150 ${
             open ? "" : "-rotate-90"
           }`}
           aria-hidden="true"

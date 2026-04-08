@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { buttonCls, labelCaptionCls } from "./form-styles";
 
 type Template = "NONE" | "BOOKLET" | "FLAT_PRINT";
 
@@ -45,36 +46,38 @@ export function TemplatePicker({
   const dirty = value !== current;
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-      <span className="text-zinc-500">상품 종류</span>
-      {OPTIONS.map((t) => {
-        const active = value === t.v;
-        return (
-          <button
-            key={t.v}
-            type="button"
-            onClick={() => setValue(t.v)}
-            className={
-              "rounded border px-2.5 py-1 transition " +
-              (active
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
-                : "border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800")
-            }
-          >
-            {t.label}
-          </button>
-        );
-      })}
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      <span className={labelCaptionCls}>상품 종류</span>
+      <div className="inline-flex h-8 rounded-md border border-border bg-card p-0.5">
+        {OPTIONS.map((t) => {
+          const active = value === t.v;
+          return (
+            <button
+              key={t.v}
+              type="button"
+              onClick={() => setValue(t.v)}
+              className={
+                "inline-flex h-7 items-center rounded px-3 text-xs font-medium transition-colors " +
+                (active
+                  ? "bg-primary text-primary-foreground"
+                  : "text-text-secondary hover:bg-surface-subtle")
+              }
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
       <button
         type="button"
         onClick={submit}
         disabled={!dirty || pending}
-        className="rounded bg-zinc-200 px-2 py-0.5 disabled:opacity-50 dark:bg-zinc-700"
+        className={buttonCls}
       >
         {pending ? "저장 중…" : "저장"}
       </button>
       {!hasGroups && value !== "NONE" && dirty && (
-        <span className="text-zinc-400">
+        <span className="text-[11px] text-text-tertiary">
           저장하면 선택한 종류의 옵션 그룹이 자동 생성됩니다
         </span>
       )}

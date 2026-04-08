@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { buttonCls, inputCls, labelCaptionCls } from "./form-styles";
 
 interface Preset {
   label: string;
@@ -52,6 +53,7 @@ interface Props {
   productId: string;
   current: number;
   bleed: number;
+  leadTimeDays: number;
   template: string;
   action: (productId: string, formData: FormData) => Promise<void>;
 }
@@ -64,6 +66,7 @@ export function BaseAreaForm({
   productId,
   current,
   bleed,
+  leadTimeDays,
   template,
   action,
 }: Props) {
@@ -77,6 +80,7 @@ export function BaseAreaForm({
     return m ? m.h : Math.round(Math.sqrt(current));
   });
   const [bleedMm, setBleedMm] = useState<number>(bleed);
+  const [leadTime, setLeadTime] = useState<number>(leadTimeDays);
   const [pending, startTransition] = useTransition();
   const area = w * h;
 
@@ -91,6 +95,7 @@ export function BaseAreaForm({
   async function onSubmit(formData: FormData) {
     formData.set("baseAreaMm2", String(area));
     formData.set("bleedMm", String(bleedMm));
+    formData.set("leadTimeDays", String(leadTime));
     startTransition(async () => {
       try {
         await action(productId, formData);
@@ -106,13 +111,13 @@ export function BaseAreaForm({
   return (
     <form
       action={onSubmit}
-      className="mt-2 flex flex-wrap items-center gap-2 text-[11px]"
+      className="mt-3 flex flex-wrap items-center gap-2"
     >
-      <span className="text-zinc-500">기준 사이즈</span>
+      <span className={labelCaptionCls}>기준 사이즈</span>
       <select
         onChange={(e) => applyPreset(e.target.value)}
         defaultValue=""
-        className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+        className={inputCls + " w-40"}
       >
         <option value="">
           프리셋 ({template === "BOOKLET"
@@ -132,38 +137,46 @@ export function BaseAreaForm({
         type="number"
         value={w}
         onChange={(e) => setW(Math.max(1, Number(e.target.value) || 1))}
-        className="w-16 rounded border border-zinc-300 px-1.5 py-0.5 text-right dark:border-zinc-700 dark:bg-zinc-900"
+        className={inputCls + " w-16 text-right"}
       />
-      <span className="text-zinc-400">×</span>
+      <span className="text-xs text-text-tertiary">×</span>
       <input
         type="number"
         value={h}
         onChange={(e) => setH(Math.max(1, Number(e.target.value) || 1))}
-        className="w-16 rounded border border-zinc-300 px-1.5 py-0.5 text-right dark:border-zinc-700 dark:bg-zinc-900"
+        className={inputCls + " w-16 text-right"}
       />
-      <span className="text-zinc-400">mm</span>
-      <span className="font-mono text-zinc-500">
+      <span className="text-xs text-text-secondary">mm</span>
+      <span className="font-mono text-xs text-text-secondary">
         = {area.toLocaleString()}mm²
       </span>
-      <span className="text-zinc-400">·</span>
-      <label className="flex items-center gap-1 text-zinc-500">
+      <span className="text-xs text-text-disabled">·</span>
+      <label className="flex items-center gap-1.5 text-xs text-text-secondary">
         도련
         <input
           type="number"
           value={bleedMm}
           min={0}
           onChange={(e) => setBleedMm(Math.max(0, Number(e.target.value) || 0))}
-          className="w-12 rounded border border-zinc-300 px-1.5 py-0.5 text-right dark:border-zinc-700 dark:bg-zinc-900"
+          className={inputCls + " w-14 text-right"}
         />
         mm
       </label>
-      <button
-        disabled={pending}
-        className="rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700 disabled:opacity-50"
-      >
+      <label className="flex items-center gap-1.5 text-xs text-text-secondary">
+        제작기간
+        <input
+          type="number"
+          value={leadTime}
+          min={0}
+          onChange={(e) => setLeadTime(Math.max(0, Number(e.target.value) || 0))}
+          className={inputCls + " w-14 text-right"}
+        />
+        영업일
+      </label>
+      <button disabled={pending} className={buttonCls}>
         {pending ? "저장 중…" : "저장"}
       </button>
-      <span className="text-zinc-400">
+      <span className="text-[11px] text-text-tertiary">
         면적 비례 가격 계산의 기준 (perArea 옵션의 분모)
       </span>
     </form>
