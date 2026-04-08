@@ -162,8 +162,12 @@ function buildEmbedScript(apiOrigin: string): string {
           + '</select></div>';
       });
       var price = state.quote ? state.quote.finalPrice : state.schema.basePrice;
-      html += '<div class="te-price"><span>예상 결제금액</span><b>' + fmtPrice(price) + '</b></div>';
-      html += '<button class="te-btn"' + (state.busy ? ' disabled' : '') + '>구매하기</button>';
+      var negative = price < 0;
+      var priceColor = negative ? 'color:#dc2626;' : '';
+      html += '<div class="te-price"><span>예상 결제금액</span><b style="' + priceColor + '">' + fmtPrice(price) + '</b></div>';
+      var disable = state.busy || negative;
+      html += '<button class="te-btn"' + (disable ? ' disabled' : '') + '>구매하기</button>';
+      if (negative) html += '<div class="te-error">옵션 합계가 음수입니다. 옵션 가격 설정을 확인하세요.</div>';
       if (state.error) html += '<div class="te-error">' + escapeHtml(state.error) + '</div>';
       container.innerHTML = html;
 

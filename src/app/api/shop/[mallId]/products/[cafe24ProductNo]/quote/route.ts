@@ -65,12 +65,13 @@ export async function POST(
   if (quote.errors.length > 0) {
     return withCors({ ok: false, ...quote }, origin, { status: 422 });
   }
-  if (quote.finalPrice < 0) {
-    return withCors(
-      { ok: false, ...quote, errors: ["finalPrice negative"] },
-      origin,
-      { status: 422 },
-    );
-  }
-  return withCors({ ok: true, ...quote }, origin);
+  // 음수여도 quote 단계에서는 통과시켜 실시간 표시. checkout 에서만 거부.
+  return withCors(
+    {
+      ok: true,
+      ...quote,
+      warning: quote.finalPrice < 0 ? "negative_total" : undefined,
+    },
+    origin,
+  );
 }
