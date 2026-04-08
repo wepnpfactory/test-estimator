@@ -113,23 +113,25 @@ export function BaseAreaForm({
         className={inputCls + " w-44"}
       >
         <option value="">프리셋 선택</option>
-        <optgroup label="📖 책자">
-          {BOOKLET_PRESETS.map((p) => (
-            <option key={`b-${p.label}`} value={p.label}>
-              {p.label}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label="📄 낱장 인쇄">
-          {FLAT_PRESETS.map((p) => (
-            <option key={`f-${p.label}`} value={p.label}>
-              {p.label}
-            </option>
-          ))}
-        </optgroup>
+        {(template === "BOOKLET" || template === "NONE") && (
+          <optgroup label="📖 책자">
+            {BOOKLET_PRESETS.map((p) => (
+              <option key={`b-${p.label}`} value={p.label}>
+                {p.label}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {(template === "FLAT_PRINT" || template === "NONE") && (
+          <optgroup label="📄 낱장 인쇄">
+            {FLAT_PRESETS.map((p) => (
+              <option key={`f-${p.label}`} value={p.label}>
+                {p.label}
+              </option>
+            ))}
+          </optgroup>
+        )}
       </select>
-      {/* template 변수는 prop 유지 — 향후 추천 프리셋 하이라이트 등에 활용 */}
-      <input type="hidden" name="templateCtx" value={template} />
       <input
         type="number"
         value={w}
