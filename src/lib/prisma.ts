@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/generated/prisma'
+import { PrismaClient } from '@/generated/prisma/client'
 import { PrismaNeon } from '@prisma/adapter-neon'
 
 // Vercel Postgres(Neon)용 어댑터 기반 싱글톤
