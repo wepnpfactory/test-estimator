@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SidebarNav } from "./_components/sidebar-nav";
+
+export const metadata: Metadata = {
+  title: {
+    default: "관리자",
+    template: "관리자 · %s",
+  },
+  description: "test-estimator 관리자 콘솔 — Cafe24 상품·옵션·주문 동기화 관리.",
+  robots: { index: false, follow: false, nocache: true },
+};
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
