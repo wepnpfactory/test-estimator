@@ -9,8 +9,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 이 프로젝트의 UI는 **StyleSeed / Toss** 디자인 시스템을 따른다. UI/스타일 작업 전 반드시 다음 문서를 먼저 읽고 규칙을 준수한다.
 
-- 디자인 랭귀지 (색/숫자/트렌드/위계): @src/styles/DESIGN-LANGUAGE.md
-- 토큰 원본 (브랜드/서피스/타이포/쉐도우): @src/styles/theme.css
+- 디자인 랭귀지 (색/숫자/트렌드/위계): `src/styles/DESIGN-LANGUAGE.md` — UI/스타일 작업 시작 전 Read 도구로 직접 읽을 것 (자동 import 안 함, 토큰 절약 목적)
+- 토큰 원본 (브랜드/서피스/타이포/쉐도우): `src/styles/theme.css` — 필요 시 Read
 - 프리미티브: `src/components/ui/*` (shadcn 스타일)
 - 패턴: `src/components/patterns/*` (StatCard, HeroCard, SectionCard, ListItem, TopBar, PageShell 등)
 - 전역 진입: `src/app/globals.css` (→ fonts → tailwind → tw-animate-css → theme → base)
