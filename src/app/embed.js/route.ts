@@ -239,7 +239,19 @@ function buildEmbedScript(apiOrigin: string): string {
           return;
         }
         if (g.kind === 'DIMENSIONS') {
+          var presets = (g.items || []).filter(function(it){ return it.widthMm && it.heightMm; });
+          var hasPresets = presets.length > 0;
+          if (!state.dimMode) state.dimMode = {};
+          var mode = state.dimMode[g.id]; // 'preset' | 'direct' | undefined
           var d = state.dims[g.id] || { w: '', h: '' };
+
+          // 현재 selection 으로 mode 추론 (초기 진입 시)
+          if (!mode) {
+            if (state.selections[g.id]) mode = 'preset';
+            else if (d.w || d.h) mode = 'direct';
+            else mode = hasPresets ? 'preset' : 'direct';
+          }
+
           // 그룹 max 와 옵션들의 max 중 큰 값을 절대 최대로 사용
           var maxItemW = 0, maxItemH = 0;
           g.items.forEach(function(it){
@@ -252,33 +264,43 @@ function buildEmbedScript(apiOrigin: string): string {
           var wNum = Number(d.w), hNum = Number(d.h);
           var overW = maxW && wNum > maxW;
           var overH = maxH && hNum > maxH;
-          var resolved = (wNum && hNum && !overW && !overH)
+          var resolved = (mode === 'direct' && wNum && hNum && !overW && !overH)
             ? findFittingItem(g, wNum, hNum)
             : null;
 
           var resolvedLabel = '';
-          if (overW || overH) {
-            resolvedLabel = '<div class="te-dim-resolved te-dim-error">최대 ' + (maxW || '?') + '×' + (maxH || '?') + 'mm 까지 입력 가능합니다</div>';
-          } else if (resolved) {
-            resolvedLabel = '<div class="te-dim-resolved">→ ' + escapeHtml(resolved.label)
-              + (resolved.addPrice ? ' (' + (resolved.addPrice >= 0 ? '+' : '') + fmtPrice(resolved.addPrice) + ')' : '')
-              + '</div>';
-          } else if (wNum && hNum) {
-            resolvedLabel = '<div class="te-dim-resolved te-dim-error">맞는 사이즈가 없습니다</div>';
+          if (mode === 'direct') {
+            if (overW || overH) {
+              resolvedLabel = '<div class="te-dim-resolved te-dim-error">최대 ' + (maxW || '?') + '×' + (maxH || '?') + 'mm 까지 입력 가능합니다</div>';
+            } else if (resolved) {
+              resolvedLabel = '<div class="te-dim-resolved">→ ' + escapeHtml(resolved.label) + '</div>';
+            } else if (wNum && hNum) {
+              resolvedLabel = '<div class="te-dim-resolved te-dim-error">맞는 사이즈가 없습니다</div>';
+            }
           }
 
           var maxAttrW = maxW ? ' max="' + maxW + '"' : '';
           var maxAttrH = maxH ? ' max="' + maxH + '"' : '';
-          var hint = (maxW && maxH)
+          var hint = (mode === 'direct' && maxW && maxH)
             ? '<div class="te-dim-hint">최대 ' + maxW + ' × ' + maxH + ' mm</div>'
             : '';
 
+          // 현재 사용 중인 W/H — preset 이면 선택된 아이템에서, direct 면 입력값에서
+          var effectiveW = wNum, effectiveH = hNum;
+          if (mode === 'preset' && state.selections[g.id]) {
+            var selPresetItem = g.items.find(function(x){ return x.id === state.selections[g.id]; });
+            if (selPresetItem) {
+              effectiveW = selPresetItem.widthMm || 0;
+              effectiveH = selPresetItem.heightMm || 0;
+            }
+          }
+
           // 책자 케이스 — 편집/표지/책등 사이즈 자동 계산해서 표시
           var derived = '';
-          if (wNum > 0 && hNum > 0 && !overW && !overH) {
+          if (effectiveW > 0 && effectiveH > 0 && !(mode === 'direct' && (overW || overH))) {
             var bleed = state.schema.bleedMm || 0;
-            var editW = wNum + bleed * 2;
-            var editH = hNum + bleed * 2;
+            var editW = effectiveW + bleed * 2;
+            var editH = effectiveH + bleed * 2;
 
             // 내지·표지 종이 두께 / 페이지 수 찾아서 책등 계산
             var innerThick = 0, coverThick = 0, pages = 0;
@@ -303,7 +325,7 @@ function buildEmbedScript(apiOrigin: string): string {
             var spine = (pages > 0 && innerThick > 0)
               ? (pages / 2) * innerThick + 2 * coverThick
               : 0;
-            var coverW = pages > 0 ? (wNum * 2 + spine + bleed * 2) : 0;
+            var coverW = pages > 0 ? (effectiveW * 2 + spine + bleed * 2) : 0;
             var coverH = editH;
 
             derived = '<dl class="te-dim-derived">';
@@ -315,14 +337,30 @@ function buildEmbedScript(apiOrigin: string): string {
             derived += '</dl>';
           }
 
+          // 셀렉트 + 직접 입력 모드
+          var rowHtml = '<div class="te-dim-row">';
+          if (hasPresets) {
+            var presetSelectVal = mode === 'preset' && state.selections[g.id] ? state.selections[g.id] : (mode === 'direct' ? '__direct__' : '');
+            rowHtml += '<select class="te-select" data-dim-mode="' + escapeHtml(g.id) + '" style="flex:1;min-width:0">';
+            rowHtml += '<option value="">사이즈 선택</option>';
+            presets.forEach(function(it){
+              var s = (mode === 'preset' && state.selections[g.id] === it.id) ? ' selected' : '';
+              rowHtml += '<option value="' + escapeHtml(it.id) + '"' + s + '>' + escapeHtml(it.label) + '</option>';
+            });
+            rowHtml += '<option value="__direct__"' + (mode === 'direct' ? ' selected' : '') + '>직접 입력</option>';
+            rowHtml += '</select>';
+          }
+          if (mode === 'direct' || !hasPresets) {
+            rowHtml += '<input type="number" min="1"' + maxAttrW + ' placeholder="가로" data-dim="w" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.w)) + '" class="te-dim-input' + (overW ? ' te-dim-input-error' : '') + '" />';
+            rowHtml += '<span class="te-dim-x">×</span>';
+            rowHtml += '<input type="number" min="1"' + maxAttrH + ' placeholder="세로" data-dim="h" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.h)) + '" class="te-dim-input' + (overH ? ' te-dim-input-error' : '') + '" />';
+            rowHtml += '<span class="te-dim-unit">mm</span>';
+          }
+          rowHtml += '</div>';
+
           html += '<div class="te-row">'
             + '<label class="te-label">' + escapeHtml(g.name) + (g.required ? ' *' : '') + '</label>'
-            + '<div class="te-dim-row">'
-              + '<input type="number" min="1"' + maxAttrW + ' placeholder="가로" data-dim="w" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.w)) + '" class="te-dim-input' + (overW ? ' te-dim-input-error' : '') + '" />'
-              + '<span class="te-dim-x">×</span>'
-              + '<input type="number" min="1"' + maxAttrH + ' placeholder="세로" data-dim="h" data-group="' + escapeHtml(g.id) + '" value="' + escapeHtml(String(d.h)) + '" class="te-dim-input' + (overH ? ' te-dim-input-error' : '') + '" />'
-              + '<span class="te-dim-unit">mm</span>'
-            + '</div>'
+            + rowHtml
             + hint
             + resolvedLabel
             + derived
@@ -438,6 +476,26 @@ function buildEmbedScript(apiOrigin: string): string {
           requestQuote();
         });
       });
+      container.querySelectorAll('select[data-dim-mode]').forEach(function(sel){
+        sel.addEventListener('change', function(){
+          var gid = sel.getAttribute('data-dim-mode');
+          if (!state.dimMode) state.dimMode = {};
+          if (sel.value === '__direct__') {
+            state.dimMode[gid] = 'direct';
+            delete state.selections[gid];
+          } else if (sel.value === '') {
+            state.dimMode[gid] = 'preset';
+            delete state.selections[gid];
+            delete state.dims[gid];
+          } else {
+            state.dimMode[gid] = 'preset';
+            state.selections[gid] = sel.value;
+            delete state.dims[gid];
+          }
+          render();
+          requestQuote();
+        });
+      });
       container.querySelectorAll('.te-dim-input[data-group]').forEach(function(inp){
         inp.addEventListener('input', function(){
           var gid = inp.getAttribute('data-group');
@@ -471,8 +529,14 @@ function buildEmbedScript(apiOrigin: string): string {
           var v = state.directValues[g.id];
           if (Number.isFinite(v) && v > 0) out.push({ groupId: g.id, directValue: v });
         } else if (g.kind === 'DIMENSIONS') {
-          var d = state.dims[g.id];
-          if (d && d.w && d.h) out.push({ groupId: g.id, widthMm: Number(d.w), heightMm: Number(d.h) });
+          // preset 모드: itemId, direct 모드: widthMm/heightMm
+          var mode = (state.dimMode && state.dimMode[g.id]) || (state.selections[g.id] ? 'preset' : 'direct');
+          if (mode === 'preset' && state.selections[g.id]) {
+            out.push({ groupId: g.id, itemId: state.selections[g.id] });
+          } else {
+            var d = state.dims[g.id];
+            if (d && d.w && d.h) out.push({ groupId: g.id, widthMm: Number(d.w), heightMm: Number(d.h) });
+          }
         } else if (state.selections[g.id]) {
           out.push({ groupId: g.id, itemId: state.selections[g.id] });
         }
@@ -489,8 +553,13 @@ function buildEmbedScript(apiOrigin: string): string {
           var v = state.directValues[g.id];
           if (!Number.isFinite(v) || v <= 0) return false;
         } else if (g.kind === 'DIMENSIONS') {
-          var d = state.dims[g.id];
-          if (!d || !d.w || !d.h) return false;
+          var mode = (state.dimMode && state.dimMode[g.id]) || (state.selections[g.id] ? 'preset' : 'direct');
+          if (mode === 'preset') {
+            if (!state.selections[g.id]) return false;
+          } else {
+            var d = state.dims[g.id];
+            if (!d || !d.w || !d.h) return false;
+          }
         } else {
           if (!state.selections[g.id]) return false;
         }
