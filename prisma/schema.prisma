@@ -27,6 +27,11 @@ model Cafe24Mall {
   hideDynamicProducts Boolean @default(true)
   // 동적 일회용 상품 등록 시 사용할 카테고리 (없으면 무카테고리)
   dynamicCategoryNo   Int?
+  // 쇼핑몰 → API 호출 시 허용할 Origin 화이트리스트 (정확 매칭)
+  // 비어 있으면 storefrontOrigin + {mallId}.cafe24.com 자동 허용
+  allowedOrigins      String[] @default([])
+  // embed.js → quote/checkout HMAC 서명 키 (몰별로 다름)
+  embedSecret         String?
   // 고객 브라우저가 장바구니로 이동할 때 사용할 storefront origin
   // 예: https://hitedin.cafe24.com 또는 커스텀 도메인
   // OAuth 콜백에서 자동 세팅, 미설정 시 mallId.cafe24.com 폴백
