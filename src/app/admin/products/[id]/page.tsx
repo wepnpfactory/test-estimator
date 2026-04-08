@@ -113,6 +113,19 @@ async function deleteOptionGroup(productId: string, groupId: string) {
   revalidatePath(`/admin/products/${productId}`);
 }
 
+async function updateProductMeta(productId: string, formData: FormData) {
+  "use server";
+  const baseAreaRaw = String(formData.get("baseAreaMm2") || "").trim();
+  const baseAreaMm2 = Number(baseAreaRaw);
+  if (Number.isFinite(baseAreaMm2) && baseAreaMm2 > 0) {
+    await prisma.product.update({
+      where: { id: productId },
+      data: { baseAreaMm2: Math.round(baseAreaMm2) },
+    });
+  }
+  revalidatePath(`/admin/products/${productId}`);
+}
+
 async function moveOptionGroup(
   productId: string,
   groupId: string,
@@ -337,8 +350,30 @@ export default async function EditProductPage({
           <h1 className="text-xl font-semibold">{product.name}</h1>
           <p className="mt-1 text-sm text-zinc-500">
             {product.mall.name} · Cafe24 #{product.cafe24ProductNo} · 기본가{" "}
-            {product.basePrice.toLocaleString()}원
+            {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
+            {product.baseAreaMm2.toLocaleString()}mm²
           </p>
+          <form
+            action={updateProductMeta.bind(null, product.id)}
+            className="mt-2 flex items-center gap-2 text-[11px]"
+          >
+            <label className="flex items-center gap-1 text-zinc-500">
+              기준 면적
+              <input
+                type="number"
+                name="baseAreaMm2"
+                defaultValue={product.baseAreaMm2}
+                className="w-24 rounded border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+              />
+              mm²
+            </label>
+            <button className="rounded bg-zinc-200 px-2 py-0.5 dark:bg-zinc-700">
+              저장
+            </button>
+            <span className="text-zinc-400">
+              perArea 곱셈의 분모. 기본 A4 = 62370
+            </span>
+          </form>
           <span
             className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
               product.status === "PUBLISHED"
@@ -513,7 +548,7 @@ export default async function EditProductPage({
                                     defaultChecked={g.perSheet}
                                     className="size-3.5"
                                   />
-                                  이 그룹의 가격을 <b>장수</b>에 곱함
+                                  <b>장수</b>에 곱함
                                 </label>
                                 <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
                                   <input
@@ -522,10 +557,55 @@ export default async function EditProductPage({
                                     defaultChecked={g.perQuantity}
                                     className="size-3.5"
                                   />
-                                  이 그룹의 가격을 <b>부수</b>에 곱함
+                                  <b>부수</b>에 곱함
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    name="perArea"
+                                    defaultChecked={g.perArea}
+                                    className="size-3.5"
+                                  />
+                                  <b>면적</b>에 곱함 (사이즈 그룹 필요)
                                 </label>
                               </div>
                             </Field>
+
+                            {(g.kind === "SHEET_COUNT" ||
+                              g.kind === "QUANTITY") && (
+                              <Field label="직접 입력 모드">
+                                <div className="space-y-2">
+                                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      name="allowDirectInput"
+                                      defaultChecked={g.allowDirectInput}
+                                      className="size-3.5"
+                                    />
+                                    사용자가 숫자 직접 입력 (옵션 셀렉트 대신)
+                                  </label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                      type="number"
+                                      name="minDirectInput"
+                                      defaultValue={g.minDirectInput ?? ""}
+                                      placeholder="최소"
+                                      className={smallInputCls}
+                                    />
+                                    <input
+                                      type="number"
+                                      name="maxDirectInput"
+                                      defaultValue={g.maxDirectInput ?? ""}
+                                      placeholder="최대"
+                                      className={smallInputCls}
+                                    />
+                                  </div>
+                                  <div className="text-[10px] text-zinc-500">
+                                    옵션 아이템에 minRange/maxRange 를 정의하면 입력값에 따라 자동 매칭됩니다.
+                                  </div>
+                                </div>
+                              </Field>
+                            )}
 
                             <Field
                               label="보이는 조건 (JSON)"
@@ -661,17 +741,19 @@ export default async function EditProductPage({
                                   </form>
                                 </div>
                                 {(() => {
-                                  const showMultiplier =
+                                  const isSheetQty =
                                     g.kind === "SHEET_COUNT" ||
                                     g.kind === "QUANTITY";
+                                  const showMultiplier =
+                                    isSheetQty && !g.allowDirectInput;
+                                  const showRange =
+                                    isSheetQty && g.allowDirectInput;
                                   const multLabel =
                                     g.kind === "SHEET_COUNT"
                                       ? "장수"
-                                      : g.kind === "QUANTITY"
-                                        ? "부수"
-                                        : "수량";
+                                      : "부수";
                                   const showDims = g.kind === "DIMENSIONS";
-                                  if (!showMultiplier && !showDims) {
+                                  if (!showMultiplier && !showDims && !showRange) {
                                     return null;
                                   }
                                   return (
@@ -693,6 +775,28 @@ export default async function EditProductPage({
                                             className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
                                           />
                                         </label>
+                                      )}
+                                      {showRange && (
+                                        <>
+                                          <label className="flex items-center gap-1">
+                                            범위
+                                            <input
+                                              type="number"
+                                              name="minRange"
+                                              defaultValue={it.minRange ?? ""}
+                                              placeholder="min"
+                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            />
+                                            ~
+                                            <input
+                                              type="number"
+                                              name="maxRange"
+                                              defaultValue={it.maxRange ?? ""}
+                                              placeholder="max"
+                                              className="w-16 rounded border border-zinc-300 px-1 py-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+                                            />
+                                          </label>
+                                        </>
                                       )}
                                       {showDims && (
                                         <>
