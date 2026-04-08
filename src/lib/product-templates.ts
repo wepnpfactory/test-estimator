@@ -21,7 +21,13 @@ interface ItemSeed {
 interface GroupSeed {
   name: string;
   value: string;
-  kind: "NORMAL" | "SHEET_COUNT" | "QUANTITY" | "DIMENSIONS";
+  kind:
+    | "NORMAL"
+    | "SHEET_COUNT"
+    | "QUANTITY"
+    | "DIMENSIONS"
+    | "INNER_PAPER"
+    | "COVER_PAPER";
   required?: boolean;
   perSheet?: boolean;
   perQuantity?: boolean;
@@ -29,8 +35,6 @@ interface GroupSeed {
   allowDirectInput?: boolean;
   minDirectInput?: number;
   maxDirectInput?: number;
-  isInnerPaper?: boolean;
-  isCoverPaper?: boolean;
   items?: ItemSeed[];
 }
 
@@ -160,11 +164,10 @@ const BOOKLET_GROUPS: GroupSeed[] = [
   {
     name: "표지 종이",
     value: "cover_paper",
-    kind: "NORMAL",
+    kind: "COVER_PAPER",
     required: true,
     perQuantity: true,
     perArea: true,
-    isCoverPaper: true,
     items: [
       { label: "아트", value: "art" },
       { label: "스노우", value: "snow" },
@@ -241,12 +244,11 @@ const BOOKLET_GROUPS: GroupSeed[] = [
   {
     name: "내지 종이",
     value: "inner_paper",
-    kind: "NORMAL",
+    kind: "INNER_PAPER",
     required: true,
     perSheet: true,
     perQuantity: true,
     perArea: true,
-    isInnerPaper: true,
     items: [
       { label: "모조 미색", value: "mojo_off" },
       { label: "모조 백색", value: "mojo_white" },
@@ -544,8 +546,8 @@ export async function scaffoldProductGroups(
         allowDirectInput: g.allowDirectInput ?? false,
         minDirectInput: g.minDirectInput ?? null,
         maxDirectInput: g.maxDirectInput ?? null,
-        isInnerPaper: g.isInnerPaper ?? false,
-        isCoverPaper: g.isCoverPaper ?? false,
+        isInnerPaper: g.kind === "INNER_PAPER",
+        isCoverPaper: g.kind === "COVER_PAPER",
         items: g.items
           ? {
               create: g.items.map((it, i) => ({

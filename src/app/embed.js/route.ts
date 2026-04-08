@@ -285,12 +285,12 @@ function buildEmbedScript(apiOrigin: string): string {
                   if (si) pages = si.multiplier || 0;
                 }
               }
-              if (og.isInnerPaper || og.isCoverPaper) {
+              if (og.kind === 'INNER_PAPER' || og.kind === 'COVER_PAPER') {
                 var psid = state.selections[og.id];
                 var pi = psid && og.items.find(function(x){return x.id===psid});
                 if (pi && pi.thicknessMm) {
-                  if (og.isInnerPaper) innerThick = pi.thicknessMm;
-                  if (og.isCoverPaper) coverThick = pi.thicknessMm;
+                  if (og.kind === 'INNER_PAPER') innerThick = pi.thicknessMm;
+                  if (og.kind === 'COVER_PAPER') coverThick = pi.thicknessMm;
                 }
               }
             });

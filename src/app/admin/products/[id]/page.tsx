@@ -20,7 +20,13 @@ import {
 import { scaffoldProductGroups } from "@/lib/product-templates";
 import type { ProductTemplate } from "@/generated/prisma/client";
 
-type GroupKindStr = "NORMAL" | "SHEET_COUNT" | "QUANTITY";
+type GroupKindStr =
+  | "NORMAL"
+  | "SHEET_COUNT"
+  | "QUANTITY"
+  | "DIMENSIONS"
+  | "INNER_PAPER"
+  | "COVER_PAPER";
 
 // ─── server actions ─────────────────────────────────────────
 
@@ -83,8 +89,9 @@ async function updateOptionGroup(
   const maxDirectRaw = String(formData.get("maxDirectInput") || "").trim();
   const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
   const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
-  const isInnerPaper = formData.get("isInnerPaper") === "on";
-  const isCoverPaper = formData.get("isCoverPaper") === "on";
+  // kind 가 INNER_PAPER/COVER_PAPER 면 boolean 도 자동으로 맞춰준다 (deprecated 호환)
+  const isInnerPaper = kindRaw === "INNER_PAPER";
+  const isCoverPaper = kindRaw === "COVER_PAPER";
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
@@ -573,6 +580,12 @@ export default async function EditProductPage({
                                   <option value="DIMENSIONS">
                                     사이즈 (가로×세로)
                                   </option>
+                                  <option value="INNER_PAPER">
+                                    내지 종이
+                                  </option>
+                                  <option value="COVER_PAPER">
+                                    표지 종이
+                                  </option>
                                 </select>
                               </Field>
                               <Field label="필수 여부">
@@ -588,63 +601,40 @@ export default async function EditProductPage({
                               </Field>
                             </div>
 
-                            {g.kind === "NORMAL" && (
-                              <>
-                                <Field label="곱셈 옵션">
-                                  <div className="flex flex-wrap gap-x-5 gap-y-2">
-                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                      <input
-                                        type="checkbox"
-                                        name="perSheet"
-                                        defaultChecked={g.perSheet}
-                                        className="size-3.5"
-                                      />
-                                      <b>장수</b>에 곱함
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                      <input
-                                        type="checkbox"
-                                        name="perQuantity"
-                                        defaultChecked={g.perQuantity}
-                                        className="size-3.5"
-                                      />
-                                      <b>부수</b>에 곱함
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                      <input
-                                        type="checkbox"
-                                        name="perArea"
-                                        defaultChecked={g.perArea}
-                                        className="size-3.5"
-                                      />
-                                      <b>면적</b>에 곱함 (사이즈 그룹 필요)
-                                    </label>
-                                  </div>
-                                </Field>
-
-                                <Field label="용지 역할 (책자 사이즈 자동 계산)">
-                                  <div className="flex gap-3">
-                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                      <input
-                                        type="checkbox"
-                                        name="isInnerPaper"
-                                        defaultChecked={g.isInnerPaper}
-                                        className="size-3.5"
-                                      />
-                                      내지 종이
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                                      <input
-                                        type="checkbox"
-                                        name="isCoverPaper"
-                                        defaultChecked={g.isCoverPaper}
-                                        className="size-3.5"
-                                      />
-                                      표지 종이
-                                    </label>
-                                  </div>
-                                </Field>
-                              </>
+                            {(g.kind === "NORMAL" ||
+                              g.kind === "INNER_PAPER" ||
+                              g.kind === "COVER_PAPER") && (
+                              <Field label="곱셈 옵션">
+                                <div className="flex flex-wrap gap-x-5 gap-y-2">
+                                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      name="perSheet"
+                                      defaultChecked={g.perSheet}
+                                      className="size-3.5"
+                                    />
+                                    <b>장수</b>에 곱함
+                                  </label>
+                                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      name="perQuantity"
+                                      defaultChecked={g.perQuantity}
+                                      className="size-3.5"
+                                    />
+                                    <b>부수</b>에 곱함
+                                  </label>
+                                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      name="perArea"
+                                      defaultChecked={g.perArea}
+                                      className="size-3.5"
+                                    />
+                                    <b>면적</b>에 곱함 (사이즈 그룹 필요)
+                                  </label>
+                                </div>
+                              </Field>
                             )}
 
                             {(g.kind === "SHEET_COUNT" ||
@@ -827,7 +817,8 @@ export default async function EditProductPage({
                                       : "부수";
                                   const showDims = g.kind === "DIMENSIONS";
                                   const showThickness =
-                                    g.isInnerPaper || g.isCoverPaper;
+                                    g.kind === "INNER_PAPER" ||
+                                    g.kind === "COVER_PAPER";
                                   if (!showMultiplier && !showDims && !showRange && !showThickness) {
                                     return null;
                                   }
@@ -990,21 +981,20 @@ export default async function EditProductPage({
 
 function KindBadge({ kind }: { kind: string }) {
   if (kind === "NORMAL") return null;
-  const cls =
-    kind === "SHEET_COUNT"
-      ? "bg-blue-50 text-blue-700"
-      : kind === "QUANTITY"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-violet-50 text-violet-700";
-  const label =
-    kind === "SHEET_COUNT"
-      ? "페이지수"
-      : kind === "QUANTITY"
-        ? "부수"
-        : "사이즈";
+  const MAP: Record<string, { cls: string; label: string }> = {
+    SHEET_COUNT: { cls: "bg-blue-50 text-blue-700", label: "페이지수" },
+    QUANTITY: { cls: "bg-amber-50 text-amber-700", label: "부수" },
+    DIMENSIONS: { cls: "bg-violet-50 text-violet-700", label: "사이즈" },
+    INNER_PAPER: { cls: "bg-emerald-50 text-emerald-700", label: "내지 종이" },
+    COVER_PAPER: { cls: "bg-teal-50 text-teal-700", label: "표지 종이" },
+  };
+  const m = MAP[kind];
+  if (!m) return null;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
-      {label}
+    <span
+      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.cls}`}
+    >
+      {m.label}
     </span>
   );
 }
