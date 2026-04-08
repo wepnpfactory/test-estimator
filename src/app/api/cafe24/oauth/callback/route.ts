@@ -14,23 +14,29 @@ function timingSafeEqualStr(a: string, b: string): boolean {
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
-  // Cafe24 콜백은 mall_id 도 함께 전달한다 (앱스토어 install 흐름)
-  const mallId = req.nextUrl.searchParams.get("mall_id");
-  if (!code || !state || !mallId) {
+  if (!code || !state) {
     return NextResponse.json(
-      { error: "code, state, mall_id are required" },
+      { error: "code, state are required" },
       { status: 400 },
     );
   }
-  if (!/^[a-z0-9_-]{1,40}$/i.test(mallId)) {
-    return NextResponse.json({ error: "invalid mall_id" }, { status: 400 });
-  }
 
-  const cookieName = `cafe24_oauth_state_${mallId}`;
-  const cookie = req.cookies.get(cookieName)?.value;
-  if (!cookie || !timingSafeEqualStr(cookie, state)) {
+  // Cafe24 콜백은 mall_id 를 query 로 안 보내는 케이스가 있어
+  // install 시 셋팅한 cafe24_oauth_state_<mallId> 쿠키들 중 state 가 일치하는 것을 찾는다.
+  const STATE_COOKIE_PREFIX = "cafe24_oauth_state_";
+  const allCookies = req.cookies.getAll();
+  const matched = allCookies.find(
+    (c) =>
+      c.name.startsWith(STATE_COOKIE_PREFIX) && timingSafeEqualStr(c.value, state),
+  );
+  if (!matched) {
     return NextResponse.json({ error: "state mismatch" }, { status: 400 });
   }
+  const mallId = matched.name.slice(STATE_COOKIE_PREFIX.length);
+  if (!mallId || !/^[a-z0-9_-]{1,40}$/i.test(mallId)) {
+    return NextResponse.json({ error: "invalid mall_id from cookie" }, { status: 400 });
+  }
+  const cookieName = matched.name;
 
   const clientId = process.env.CAFE24_CLIENT_ID;
   const clientSecret = process.env.CAFE24_CLIENT_SECRET;
