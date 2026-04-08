@@ -257,8 +257,8 @@ function buildEmbedScript(apiOrigin: string): string {
               var sel = state.selections[g.id] === it.id ? ' selected' : '';
               var add = '';
               var per = '';
-              if (it.perSheet) per += '×장';
-              if (it.perQuantity) per += '×부';
+              if (g.perSheet) per += '×장';
+              if (g.perQuantity) per += '×부';
               if (it.addPrice > 0) add = ' (+' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (it.addPrice < 0) add = ' (' + fmtPrice(it.addPrice) + (per ? ' ' + per : '') + ')';
               else if (per) add = ' (' + per + ')';
