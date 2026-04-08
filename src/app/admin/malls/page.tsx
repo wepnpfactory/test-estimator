@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ScriptTagControls } from "./_components/script-tag-controls";
 
 // OAuth 설치 직후 진입 시 항상 최신 데이터 노출
 export const dynamic = "force-dynamic";
@@ -92,6 +93,7 @@ export default async function MallsPage() {
                   )}
                 </dl>
               )}
+              {connected && <ScriptTagControls mallDbId={m.id} />}
             </div>
           );
         })}
