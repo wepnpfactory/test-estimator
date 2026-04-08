@@ -410,7 +410,7 @@ export function calculateQuote(
   let innerThicknessMm = 0;
   for (const r of resolved) {
     if (
-      (r.group.kind === "INNER_PAPER" || r.group.isInnerPaper) &&
+      r.group.kind === "INNER_PAPER" &&
       r.item.thicknessMm
     ) {
       innerThicknessMm = r.item.thicknessMm;
@@ -428,7 +428,7 @@ export function calculateQuote(
   const coverAreaRatio = coverAreaMm2 > 0 ? coverAreaMm2 / baseArea : areaRatio;
 
   // 5. 합계 계산 + lead time 집계
-  //    perArea 는 COVER_PAPER / isCoverPaper 그룹에선 coverAreaRatio 를 사용
+  //    perArea 는 COVER_PAPER 그룹에선 coverAreaRatio 를 사용
   let optionsAddPrice = 0;
   let maxOptionLeadTime = 0;
   const resolvedItems: QuoteResult["resolvedItems"] = [];
@@ -438,7 +438,7 @@ export function calculateQuote(
     if (r.group.perQuantity) c *= quantity;
     if (r.group.perArea) {
       const isCover =
-        r.group.kind === "COVER_PAPER" || r.group.isCoverPaper;
+        r.group.kind === "COVER_PAPER";
       c *= isCover ? coverAreaRatio : areaRatio;
     }
     optionsAddPrice += c;

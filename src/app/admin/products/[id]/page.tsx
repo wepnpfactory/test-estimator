@@ -80,26 +80,32 @@ async function updateOptionGroup(
   const perQuantity = formData.get("perQuantity") === "on";
   const perArea = formData.get("perArea") === "on";
   const allowDirectInput = formData.get("allowDirectInput") === "on";
+  const multiSelect = formData.get("multiSelect") === "on";
   const minDirectRaw = String(formData.get("minDirectInput") || "").trim();
   const maxDirectRaw = String(formData.get("maxDirectInput") || "").trim();
   const minDirectInput = minDirectRaw === "" ? null : Number(minDirectRaw);
   const maxDirectInput = maxDirectRaw === "" ? null : Number(maxDirectRaw);
-  // kind 가 INNER_PAPER/COVER_PAPER 면 boolean 도 자동으로 맞춰준다 (deprecated 호환)
-  const isInnerPaper = kindRaw === "INNER_PAPER";
-  const isCoverPaper = kindRaw === "COVER_PAPER";
+  const displayTypeRaw = String(formData.get("displayType") || "SELECT");
+  const displayType: "SELECT" | "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX" =
+    displayTypeRaw === "RADIO" ||
+    displayTypeRaw === "SWATCH" ||
+    displayTypeRaw === "NUMBER" ||
+    displayTypeRaw === "CHECKBOX"
+      ? (displayTypeRaw as "RADIO" | "SWATCH" | "NUMBER" | "CHECKBOX")
+      : "SELECT";
   await prisma.optionGroup.update({
     where: { id: groupId },
     data: {
       ...(name ? { name } : {}),
       ...(value ? { value } : {}),
       kind: kindRaw,
+      displayType,
       required,
       perSheet,
       perQuantity,
       perArea,
       allowDirectInput,
-      isInnerPaper,
-      isCoverPaper,
+      multiSelect,
       minDirectInput:
         minDirectInput !== null && Number.isFinite(minDirectInput)
           ? minDirectInput
@@ -165,12 +171,21 @@ async function updateProductMeta(productId: string, formData: FormData) {
   const baseAreaMm2 = Number(baseAreaRaw);
   const bleedRaw = String(formData.get("bleedMm") || "").trim();
   const bleedMm = Number(bleedRaw);
-  const data: { baseAreaMm2?: number; bleedMm?: number } = {};
+  const leadRaw = String(formData.get("leadTimeDays") || "").trim();
+  const leadTimeDays = Number(leadRaw);
+  const data: {
+    baseAreaMm2?: number;
+    bleedMm?: number;
+    leadTimeDays?: number;
+  } = {};
   if (Number.isFinite(baseAreaMm2) && baseAreaMm2 > 0) {
     data.baseAreaMm2 = Math.round(baseAreaMm2);
   }
   if (Number.isFinite(bleedMm) && bleedMm >= 0) {
     data.bleedMm = Math.round(bleedMm);
+  }
+  if (Number.isFinite(leadTimeDays) && leadTimeDays >= 0) {
+    data.leadTimeDays = Math.round(leadTimeDays);
   }
   if (Object.keys(data).length > 0) {
     await prisma.product.update({ where: { id: productId }, data });
@@ -231,49 +246,84 @@ async function updateOptionItem(
   formData: FormData,
 ) {
   "use server";
-  const multiplier = Number(formData.get("multiplier") || 1);
-  const widthRaw = String(formData.get("widthMm") || "").trim();
-  const heightRaw = String(formData.get("heightMm") || "").trim();
-  const widthMm = widthRaw === "" ? null : Number(widthRaw);
-  const heightMm = heightRaw === "" ? null : Number(heightRaw);
-  const minRangeRaw = String(formData.get("minRange") || "").trim();
-  const maxRangeRaw = String(formData.get("maxRange") || "").trim();
-  const minRange = minRangeRaw === "" ? null : Number(minRangeRaw);
-  const maxRange = maxRangeRaw === "" ? null : Number(maxRangeRaw);
-  const thicknessRaw = String(formData.get("thicknessMm") || "").trim();
-  const thicknessMm = thicknessRaw === "" ? null : Number(thicknessRaw);
-  // 비활성 조건 JSON
-  const disabledWhenRaw = String(formData.get("disabledWhen") || "").trim();
-  let disabledWhen: unknown = null;
-  if (disabledWhenRaw) {
-    try {
-      const parsed = JSON.parse(disabledWhenRaw);
-      if (Array.isArray(parsed)) disabledWhen = parsed;
-    } catch {}
+  // patch 스타일 — formData 에 존재하는 key 만 업데이트, 나머지는 유지
+  const data: Record<string, unknown> = {};
+
+  const setOptStr = (key: string, mapper?: (v: string) => unknown) => {
+    if (!formData.has(key)) return;
+    const raw = String(formData.get(key) ?? "").trim();
+    data[key] = mapper ? mapper(raw) : raw || null;
+  };
+  const setOptInt = (key: string, opts: { nullable?: boolean; positive?: boolean; min?: number } = {}) => {
+    if (!formData.has(key)) return;
+    const raw = String(formData.get(key) ?? "").trim();
+    if (raw === "") {
+      data[key] = opts.nullable ? null : 0;
+      return;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+    if (opts.positive && n <= 0) {
+      data[key] = opts.nullable ? null : 0;
+      return;
+    }
+    if (opts.min != null && n < opts.min) return;
+    data[key] = Math.round(n);
+  };
+  const setOptFloat = (key: string, opts: { positive?: boolean } = {}) => {
+    if (!formData.has(key)) return;
+    const raw = String(formData.get(key) ?? "").trim();
+    if (raw === "") {
+      data[key] = null;
+      return;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+    if (opts.positive && n <= 0) {
+      data[key] = null;
+      return;
+    }
+    data[key] = n;
+  };
+
+  // label/value/addPrice
+  if (formData.has("label")) {
+    const label = String(formData.get("label") ?? "").trim();
+    if (label) data.label = label;
   }
-  await prisma.optionItem.update({
-    where: { id: itemId },
-    data: {
-      multiplier: Number.isFinite(multiplier) ? multiplier : 1,
-      minRange:
-        minRange !== null && Number.isFinite(minRange) ? minRange : null,
-      maxRange:
-        maxRange !== null && Number.isFinite(maxRange) ? maxRange : null,
-      thicknessMm:
-        thicknessMm !== null && Number.isFinite(thicknessMm) && thicknessMm > 0
-          ? thicknessMm
-          : null,
-      disabledWhen: disabledWhen as never,
-      widthMm:
-        widthMm !== null && Number.isFinite(widthMm) && widthMm > 0
-          ? widthMm
-          : null,
-      heightMm:
-        heightMm !== null && Number.isFinite(heightMm) && heightMm > 0
-          ? heightMm
-          : null,
-    },
-  });
+  if (formData.has("value")) {
+    const value = String(formData.get("value") ?? "").trim();
+    if (value) data.value = value;
+  }
+  setOptInt("addPrice");
+
+  setOptInt("multiplier");
+  setOptInt("widthMm", { nullable: true, positive: true });
+  setOptInt("heightMm", { nullable: true, positive: true });
+  setOptInt("minRange", { nullable: true });
+  setOptInt("maxRange", { nullable: true });
+  setOptFloat("thicknessMm", { positive: true });
+  setOptInt("leadTimeDays", { min: 0 });
+  setOptStr("imageUrl");
+
+  if (formData.has("disabledWhen")) {
+    const raw = String(formData.get("disabledWhen") ?? "").trim();
+    let parsed: unknown = null;
+    if (raw) {
+      try {
+        const p = JSON.parse(raw);
+        if (Array.isArray(p)) parsed = p;
+      } catch {}
+    }
+    data.disabledWhen = parsed;
+  }
+
+  if (Object.keys(data).length === 0) return;
+  try {
+    await prisma.optionItem.update({ where: { id: itemId }, data });
+  } catch {
+    // value 중복 등은 silent — UI 가 revalidate 로 원복
+  }
   revalidatePath(`/admin/products/${productId}`);
 }
 
@@ -419,7 +469,7 @@ export default async function EditProductPage({
     <div className="max-w-4xl">
       <Link
         href="/admin/products"
-        className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+        className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-foreground"
       >
         <ArrowLeft className="size-3.5" aria-hidden />
         연동 상품 목록
@@ -427,7 +477,7 @@ export default async function EditProductPage({
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">{product.name}</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-text-secondary">
             {product.mall.name} · Cafe24 #{product.cafe24ProductNo} · 기본가{" "}
             {product.basePrice.toLocaleString()}원 · 기준 면적{" "}
             {(product.baseAreaMm2 ?? 62370).toLocaleString()}mm²
@@ -443,14 +493,15 @@ export default async function EditProductPage({
             productId={product.id}
             current={product.baseAreaMm2 ?? 62370}
             bleed={product.bleedMm ?? 3}
+            leadTimeDays={product.leadTimeDays ?? 1}
             template={product.template ?? "NONE"}
             action={updateProductMeta}
           />
           <span
             className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
               product.status === "PUBLISHED"
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-zinc-100 text-zinc-600"
+                ? "bg-success/10 text-success"
+                : "bg-muted text-text-secondary"
             }`}
           >
             {product.status}
@@ -458,7 +509,7 @@ export default async function EditProductPage({
         </div>
         {product.status !== "PUBLISHED" && (
           <form action={publishProduct.bind(null, product.id)}>
-            <button className="inline-flex h-8 items-center rounded-md bg-emerald-600 px-3 text-xs font-medium text-white shadow-sm hover:bg-emerald-700">
+            <button className="inline-flex h-8 items-center rounded-md bg-success px-3 text-xs font-medium text-success-foreground shadow-sm hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1">
               게시
             </button>
           </form>
@@ -469,12 +520,12 @@ export default async function EditProductPage({
         <div className="flex items-end justify-between">
           <div>
             <h2 className="text-base font-semibold">옵션 그룹</h2>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
+            <p className="mt-0.5 text-[11px] text-text-tertiary">
               그룹 머리글을 클릭해 값 목록을 펼치거나 접을 수 있습니다. 접힌
               상태는 브라우저에 기억됩니다.
             </p>
           </div>
-          <div className="text-[11px] text-zinc-500">총 {groupCount}개</div>
+          <div className="text-[11px] text-text-tertiary">총 {groupCount}개</div>
         </div>
 
         <div className="mt-4 space-y-3">

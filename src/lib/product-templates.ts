@@ -546,8 +546,6 @@ export async function scaffoldProductGroups(
         allowDirectInput: g.allowDirectInput ?? false,
         minDirectInput: g.minDirectInput ?? null,
         maxDirectInput: g.maxDirectInput ?? null,
-        isInnerPaper: g.kind === "INNER_PAPER",
-        isCoverPaper: g.kind === "COVER_PAPER",
         items: g.items
           ? {
               create: g.items.map((it, i) => ({
