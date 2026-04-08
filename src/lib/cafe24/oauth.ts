@@ -11,6 +11,9 @@ export const CAFE24_SCOPES = [
   "mall.read_store",
   "mall.read_notification",
   "mall.write_notification",
+  // ScriptTag API (embed.js 자동 설치)
+  "mall.read_application",
+  "mall.write_application",
 ] as const;
 
 export function authorizeUrl(params: {
